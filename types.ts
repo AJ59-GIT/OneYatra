@@ -20,6 +20,8 @@ export interface SearchParams {
   returnDate?: string;
   returnTime?: string;
   segments: TripSegment[];
+  roadDistance?: number; // Real road distance in meters from OSRM
+  roadDuration?: number; // Real road duration in seconds from OSRM
 }
 
 export interface TripSegment {

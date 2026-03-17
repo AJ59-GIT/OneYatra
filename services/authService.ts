@@ -60,12 +60,16 @@ export const initAuthListener = (callback: (user: UserProfile | null, rawUser: U
         avatar: user.photoURL || undefined,
         preferences: {}
       };
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));
-      localStorage.setItem('oneyatra_user', 'true');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));
+        localStorage.setItem('oneyatra_user', 'true');
+      }
       callback(profile, user);
     } else {
-      localStorage.removeItem(CURRENT_USER_KEY);
-      localStorage.removeItem('oneyatra_user');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(CURRENT_USER_KEY);
+        localStorage.removeItem('oneyatra_user');
+      }
       callback(null, null);
     }
   });
@@ -160,7 +164,9 @@ export const updateUserProfile = async (profile: UserProfile): Promise<boolean> 
       photoURL: profile.avatar
     });
     // Update local storage as well
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));
+    }
     return true;
   } catch (error) {
     console.error("Failed to update profile", error);
@@ -174,11 +180,14 @@ export const sendPasswordReset = async (email: string): Promise<void> => {
 
 export const logoutUser = async () => {
   await signOut(auth);
-  localStorage.removeItem(CURRENT_USER_KEY);
-  localStorage.removeItem('oneyatra_user');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem('oneyatra_user');
+  }
 };
 
 export const getCurrentUser = (): UserProfile | null => {
+  if (typeof window === 'undefined') return null;
   try {
     const data = localStorage.getItem(CURRENT_USER_KEY);
     return data ? JSON.parse(data) : null;
@@ -190,7 +199,9 @@ export const getCurrentUser = (): UserProfile | null => {
 };
 
 export const clearAuthData = () => {
-  localStorage.removeItem(CURRENT_USER_KEY);
-  localStorage.removeItem('oneyatra_user');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem('oneyatra_user');
+  }
 };
 

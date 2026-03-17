@@ -25,11 +25,11 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   className
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(parseISO(value));
+  const [currentMonth, setCurrentMonth] = useState(() => value ? parseISO(value) : new Date());
   const wrapperRef = useRef<HTMLDivElement>(null);
   
   const minDateObj = startOfDay(parseISO(minDate));
-  const selectedDateObj = parseISO(value);
+  const selectedDateObj = value ? parseISO(value) : null;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -109,7 +109,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         className={`cursor-pointer ${className} outline-none focus:ring-2 focus:ring-brand-200 rounded-md p-1 -m-1`}
         role="button"
         tabIndex={0}
-        aria-label={`Select date, current is ${format(selectedDateObj, 'EEE, d MMM yyyy')}`}
+        aria-label={selectedDateObj ? `Select date, current is ${format(selectedDateObj, 'EEE, d MMM yyyy')}` : 'Select date'}
         aria-expanded={isOpen}
         onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -119,8 +119,10 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         }}
       >
         <div className="flex items-center justify-between w-full text-gray-900 font-medium">
-          <span>{format(selectedDateObj, 'EEE, d MMM yyyy')}</span>
-          {isFlexible && (
+          <span className={!selectedDateObj ? 'text-gray-400' : 'dark:text-white'}>
+            {selectedDateObj ? format(selectedDateObj, 'EEE, d MMM yyyy') : 'Select Date'}
+          </span>
+          {isFlexible && selectedDateObj && (
              <span className="text-[10px] bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded font-bold ml-2 whitespace-nowrap">
                ±3 Days
              </span>
@@ -158,7 +160,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           <div className="grid grid-cols-7 gap-1 mb-4" role="grid">
             {days.map((day, idx) => {
               const isDisabled = isBefore(day, minDateObj);
-              const isSelected = isSameDay(day, selectedDateObj);
+              const isSelected = selectedDateObj ? isSameDay(day, selectedDateObj) : false;
               const isCurrentMonth = isSameMonth(day, currentMonth);
               const isWknd = isWeekend(day);
               const priceLevel = getPriceLevel(day);

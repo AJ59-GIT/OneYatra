@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Calendar, ArrowRight, Repeat, Building, X, Heart, Plus, Users, Clock, Locate, Loader2, Bookmark, ChevronDown, ChevronUp, Star, Trash2 } from 'lucide-react';
+import { Search, MapPin, Calendar, ArrowRight, Repeat, Building, X, Heart, Plus, Users, Clock, Locate, Loader2, Bookmark, ChevronDown, ChevronUp, Star, Trash2, Globe } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { SearchParams, SavedSearch, TripSegment, AppView } from '../types';
 import { LocationAutocomplete } from '../components/LocationAutocomplete';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 import { getCityFromCoordinates } from '../services/locationService';
+import { getCurrentUser } from '../services/authService';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -24,23 +25,19 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
   // Single/Round Trip State
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [returnDate, setReturnDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 2); // Default return 2 days later
-    return d.toISOString().split('T')[0];
-  });
-  const [time, setTime] = useState('08:00');
+  const [date, setDate] = useState('');
+  const [returnDate, setReturnDate] = useState('');
+  const [time, setTime] = useState('');
   
   // Multi City State
   const [segments, setSegments] = useState<TripSegment[]>([
-    { id: '1', origin: '', destination: '', date: new Date().toISOString().split('T')[0], time: '08:00' },
-    { id: '2', origin: '', destination: '', date: new Date().toISOString().split('T')[0], time: '14:00' }
+    { id: '1', origin: '', destination: '', date: '', time: '' },
+    { id: '2', origin: '', destination: '', date: '', time: '' }
   ]);
 
   // Common State
   const [isFlexible, setIsFlexible] = useState(false);
-  const [passengers, setPassengers] = useState(1);
+  const [passengers, setPassengers] = useState<number | ''>('');
   const [isLocating, setIsLocating] = useState(false);
   
   // History State
@@ -55,6 +52,9 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const saveModalRef = useFocusTrap(isSaveModalOpen, () => setIsSaveModalOpen(false));
+
+  const currentUser = getCurrentUser();
+  const isProfileIncomplete = currentUser && (!currentUser.phone || !currentUser.dob);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -93,7 +93,7 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
       origin: lastSegment.destination, // Chain origin from prev destination
       destination: '',
       date: lastSegment.date,
-      time: '09:00'
+      time: ''
     };
     setSegments([...segments, newSegment]);
   };
@@ -198,9 +198,28 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
 
     let params: SearchParams;
     if (tripType === 'MULTI_CITY') {
-        params = { origin: segments[0].origin, destination: segments[segments.length-1].destination, date: segments[0].date, time: segments[0].time, passengers, isFlexible, tripType: 'MULTI_CITY', segments };
+        params = { 
+          origin: segments[0].origin, 
+          destination: segments[segments.length-1].destination, 
+          date: segments[0].date || new Date().toISOString().split('T')[0], 
+          time: segments[0].time || '08:00', 
+          passengers: passengers === '' ? 1 : passengers, 
+          isFlexible, 
+          tripType: 'MULTI_CITY', 
+          segments 
+        };
     } else {
-        params = { origin, destination, date, time, passengers, isFlexible, tripType, segments: [], returnDate: tripType === 'ROUND_TRIP' ? returnDate : undefined };
+        params = { 
+          origin, 
+          destination, 
+          date: date || new Date().toISOString().split('T')[0], 
+          time: time || '08:00', 
+          passengers: passengers === '' ? 1 : passengers, 
+          isFlexible, 
+          tripType, 
+          segments: [], 
+          returnDate: tripType === 'ROUND_TRIP' ? (returnDate || date) : undefined 
+        };
     }
 
     let updated: SavedSearch[];
@@ -249,9 +268,9 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
         params = { 
             origin: segments[0].origin, 
             destination: segments[segments.length - 1].destination, 
-            date: segments[0].date, 
-            time: segments[0].time, 
-            passengers, 
+            date: segments[0].date || new Date().toISOString().split('T')[0], 
+            time: segments[0].time || '08:00', 
+            passengers: passengers === '' ? 1 : passengers, 
             isFlexible, 
             tripType: 'MULTI_CITY', 
             segments 
@@ -260,13 +279,13 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
         params = { 
             origin, 
             destination, 
-            date, 
-            time, 
-            passengers, 
+            date: date || new Date().toISOString().split('T')[0], 
+            time: time || '08:00', 
+            passengers: passengers === '' ? 1 : passengers, 
             isFlexible, 
             tripType, 
             segments: [],
-            returnDate: tripType === 'ROUND_TRIP' ? returnDate : undefined
+            returnDate: tripType === 'ROUND_TRIP' ? (returnDate || date) : undefined
         };
     }
     addToHistory(params);
@@ -282,6 +301,27 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        {isProfileIncomplete && (
+          <div className="mb-8 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-center gap-3">
+              <div className="bg-brand-100 dark:bg-brand-900/40 p-2 rounded-full">
+                <Users className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900 dark:text-white text-sm">Complete your profile</h4>
+                <p className="text-xs text-gray-500 dark:text-slate-400">Add your phone number and details for a better experience.</p>
+              </div>
+            </div>
+            <Button 
+              size="sm" 
+              onClick={() => navigate('/complete-profile')}
+              className="whitespace-nowrap"
+            >
+              Complete Now
+            </Button>
+          </div>
+        )}
+
         <section className="text-center max-w-3xl mx-auto mb-10">
           <h1 className="text-4xl sm:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">
             {t('hero_title').split('.')[0]}<br/>
@@ -323,7 +363,7 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
                         <div className="flex items-center bg-gray-50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-slate-700 group-focus-within:ring-2 ring-brand-200 transition-all p-3">
                             <MapPin className="text-gray-400 h-5 w-5 mr-3 shrink-0 rtl:mr-0 rtl:ml-3" aria-hidden="true" />
                             <div className="flex-grow">
-                                <LocationAutocomplete value={origin} onChange={setOrigin} placeholder={t('label_from')} required className="bg-transparent border-none outline-none w-full text-gray-900 dark:text-white font-medium placeholder-gray-400" />
+                                <LocationAutocomplete value={origin} onChange={(val, suggestion) => setOrigin(val)} placeholder={t('label_from')} required className="bg-transparent border-none outline-none w-full text-gray-900 dark:text-white font-medium placeholder-gray-400" />
                             </div>
                             <button type="button" onClick={handleGeolocation} disabled={isLocating} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Use current location">
                                 {isLocating ? <Loader2 className="h-5 w-5 text-brand-500 animate-spin" aria-hidden="true" /> : <Locate className="h-5 w-5 text-gray-400 hover:text-brand-600" aria-hidden="true" />}
@@ -338,7 +378,7 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
                         <div className="flex items-center bg-gray-50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-slate-700 group-focus-within:ring-2 ring-brand-200 transition-all p-3">
                             <MapPin className="text-gray-400 h-5 w-5 mr-3 shrink-0 rtl:mr-0 rtl:ml-3" aria-hidden="true" />
                             <div className="flex-grow">
-                                <LocationAutocomplete value={destination} onChange={setDestination} placeholder={t('label_to')} required className="bg-transparent border-none outline-none w-full text-gray-900 dark:text-white font-medium placeholder-gray-400" />
+                                <LocationAutocomplete value={destination} onChange={(val, suggestion) => setDestination(val)} placeholder={t('label_to')} required className="bg-transparent border-none outline-none w-full text-gray-900 dark:text-white font-medium placeholder-gray-400" />
                             </div>
                         </div>
                     </div>
@@ -377,7 +417,7 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
                         <label htmlFor="passengers-input" className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-wider">{t('label_passengers')}</label>
                         <div className="flex items-center bg-gray-50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-slate-700 group-focus-within:ring-2 ring-brand-200 transition-all p-3">
                             <Users className="text-gray-400 h-5 w-5 mr-3 rtl:mr-0 rtl:ml-3" aria-hidden="true" />
-                            <input id="passengers-input" type="number" min="1" max="10" value={passengers} onChange={(e) => setPassengers(parseInt(e.target.value))} className="bg-transparent border-none outline-none w-full text-gray-900 dark:text-white font-medium" required />
+                            <input id="passengers-input" type="number" min="1" max="10" value={passengers} onChange={(e) => setPassengers(e.target.value === '' ? '' : parseInt(e.target.value))} className="bg-transparent border-none outline-none w-full text-gray-900 dark:text-white font-medium" required placeholder="1" />
                         </div>
                     </div>
                 </div>
@@ -484,9 +524,10 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
                                 min="1" 
                                 max="10" 
                                 value={passengers} 
-                                onChange={(e) => setPassengers(parseInt(e.target.value))} 
+                                onChange={(e) => setPassengers(e.target.value === '' ? '' : parseInt(e.target.value))} 
                                 className="bg-transparent border-none outline-none w-12 text-sm font-medium text-center dark:text-white" 
                                 title="Passengers"
+                                placeholder="1"
                                 aria-label="Number of passengers"
                              />
                              <span className="text-xs text-gray-500 dark:text-slate-400 ml-1">Pax</span>
@@ -522,6 +563,59 @@ export const HomePage = ({ onSearch }: HomePageProps) => {
                   <Building className="h-3 w-3 mr-1 rtl:mr-0 rtl:ml-1" /> {t('group_booking')}
               </button>
           </div>
+        </section>
+
+        {/* Quick Actions */}
+        <section className="max-w-5xl mx-auto mt-8 grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <button 
+            onClick={() => navigate('/route-planner')}
+            className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500 transition-all group"
+          >
+            <div className="p-3 bg-brand-50 dark:bg-brand-900/30 rounded-xl mb-2 group-hover:scale-110 transition-transform">
+              <MapPin className="h-6 w-6 text-brand-600 dark:text-brand-400" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Route Planner</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/location-search')}
+            className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500 transition-all group"
+          >
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl mb-2 group-hover:scale-110 transition-transform">
+              <Globe className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Global Search</span>
+          </button>
+          
+          <button 
+            onClick={() => navigate('/saved-trips')}
+            className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500 transition-all group"
+          >
+            <div className="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-xl mb-2 group-hover:scale-110 transition-transform">
+              <Heart className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Favorites</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/alerts')}
+            className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500 transition-all group"
+          >
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl mb-2 group-hover:scale-110 transition-transform">
+              <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Travel Alerts</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/impact')}
+            className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500 transition-all group"
+          >
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl mb-2 group-hover:scale-110 transition-transform">
+              <Star className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">My Impact</span>
+          </button>
         </section>
 
         {/* --- SAVED SEARCHES SECTION --- */}

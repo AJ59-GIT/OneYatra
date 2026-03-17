@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plane, Building2, MapPin, Home, Briefcase, Star } from 'lucide-react';
-import { LocationSuggestion, searchLocations } from '../services/locationService';
+import { Plane, Building2, MapPin, Home, Briefcase, Star, Loader2, X, Navigation } from 'lucide-react';
+import { LocationSuggestion, searchLocations, getCityFromCoordinates } from '../services/locationService';
 
 interface LocationAutocompleteProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, suggestion?: LocationSuggestion) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
@@ -22,8 +22,25 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Try to get user's location for search biasing
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          // Fallback to India center if permission denied or unavailable
+        },
+        { timeout: 5000 }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -37,21 +54,25 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      // If empty, show defaults (e.g. saved addresses)
-      if (value.length < 1) {
+      if (value.length < 2) {
          setSuggestions([]); 
          return;
       }
       setIsLoading(true);
-      const results = await searchLocations(value);
-      setSuggestions(results);
-      setIsLoading(false);
-      setIsOpen(results.length > 0);
+      try {
+        const results = await searchLocations(value, userCoords || undefined);
+        setSuggestions(results);
+        setIsOpen(results.length > 0);
+      } catch (error) {
+        console.error("Search error:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     const timer = setTimeout(fetchSuggestions, 300); // 300ms Debounce
     return () => clearTimeout(timer);
-  }, [value]);
+  }, [value, userCoords]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -71,17 +92,46 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   };
 
   const selectSuggestion = (s: LocationSuggestion) => {
-    onChange(s.fullAddress || s.city);
+    onChange(s.fullAddress || s.city, s);
     setIsOpen(false);
     setSuggestions([]);
     setHighlightedIndex(-1);
-    // Return focus to input (though it likely already has it)
     inputRef.current?.focus();
+  };
+
+  const handleLocateMe = async () => {
+    if (!navigator.geolocation) return;
+    
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserCoords({ lat: latitude, lng: longitude });
+        const cityName = await getCityFromCoordinates(latitude, longitude);
+        if (cityName) {
+          onChange(cityName);
+          // Trigger a search with the city name to get full details
+          const results = await searchLocations(cityName, { lat: latitude, lng: longitude });
+          if (results.length > 0) {
+            selectSuggestion(results[0]);
+          }
+        }
+        setIsLocating(false);
+      },
+      () => {
+        setIsLocating(false);
+        alert("Unable to retrieve your location. Please check your browser permissions.");
+      },
+      { timeout: 10000 }
+    );
   };
 
   const HighlightText = ({ text, highlight }: { text: string, highlight: string }) => {
     if (!highlight.trim()) return <span>{text}</span>;
-    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+    
+    const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = text.split(new RegExp(`(${escapedHighlight})`, 'gi'));
+    
     return (
       <span>
         {parts.map((part, i) => 
@@ -92,19 +142,21 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   };
 
   const getIcon = (item: LocationSuggestion) => {
-      if (item.type === 'AIRPORT') return <Plane className="h-4 w-4" aria-hidden="true" />;
+      if (item.type === 'AIRPORT') return <Plane className="h-4 w-4" />;
       if (item.type === 'SAVED') {
           const lowerCity = item.city.toLowerCase();
-          if (lowerCity.includes('home')) return <Home className="h-4 w-4" aria-hidden="true" />;
-          if (lowerCity.includes('work') || lowerCity.includes('office')) return <Briefcase className="h-4 w-4" aria-hidden="true" />;
-          return <Star className="h-4 w-4" aria-hidden="true" />;
+          if (lowerCity.includes('home')) return <Home className="h-4 w-4" />;
+          if (lowerCity.includes('work') || lowerCity.includes('office')) return <Briefcase className="h-4 w-4" />;
+          return <Star className="h-4 w-4" />;
       }
-      return <Building2 className="h-4 w-4" aria-hidden="true" />;
+      if (item.type === 'CITY') return <Building2 className="h-4 w-4" />;
+      return <MapPin className="h-4 w-4" />;
   };
 
   const getIconBg = (item: LocationSuggestion) => {
       if (item.type === 'AIRPORT') return 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
       if (item.type === 'SAVED') return 'bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400';
+      if (item.type === 'CITY') return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
       return 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400';
   };
 
@@ -112,27 +164,58 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
   return (
     <div ref={wrapperRef} className="w-full relative group">
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => {
-             onChange(e.target.value);
-             if(!isOpen && e.target.value.length >= 1) setIsOpen(true);
-          }}
-          onKeyDown={handleKeyDown}
-          onFocus={() => value.length >= 1 && setIsOpen(true)}
-          className={className}
-          placeholder={placeholder}
-          required={required}
-          autoComplete="off"
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-          aria-activedescendant={activeDescendantId}
-          aria-label={placeholder || "Location Search"}
-        />
+        <div className="relative flex items-center">
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={(e) => {
+               onChange(e.target.value);
+               if(!isOpen && e.target.value.length >= 2) setIsOpen(true);
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={() => value.length >= 2 && setIsOpen(true)}
+            className={`${className} pr-24`}
+            placeholder={placeholder}
+            required={required}
+            autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-activedescendant={activeDescendantId}
+            aria-label={placeholder || "Location Search"}
+          />
+          
+          <div className="absolute right-3 flex items-center gap-2">
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+            
+            {value && (
+              <button 
+                type="button"
+                onClick={() => {
+                  onChange('');
+                  setSuggestions([]);
+                  setIsOpen(false);
+                  inputRef.current?.focus();
+                }}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-slate-200"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleLocateMe}
+              disabled={isLocating}
+              className={`p-1.5 rounded-lg transition-all ${isLocating ? 'bg-brand-50 text-brand-600 animate-pulse' : 'hover:bg-brand-50 text-gray-400 hover:text-brand-600 dark:hover:bg-brand-900/20'}`}
+              title="Locate Me"
+            >
+              {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
         
         {isOpen && (
            <ul 
@@ -142,7 +225,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
            >
               {suggestions.map((item, index) => (
                 <li 
-                  key={item.id}
+                  key={`${item.id}-${index}`}
                   id={`suggestion-${index}`}
                   role="option"
                   aria-selected={index === highlightedIndex}
@@ -153,13 +236,13 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
                       {getIcon(item)}
                    </div>
                    <div className="flex-grow min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-white text-sm truncate flex items-center gap-2">
+                      <div className="font-bold text-gray-900 dark:text-white text-sm truncate flex items-center gap-2">
                         <HighlightText text={item.city} highlight={value} />
                         {item.code && <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 px-1.5 py-0.5 rounded bg-gray-50 dark:bg-slate-800 tracking-wider">{item.code}</span>}
                         {item.type === 'SAVED' && <span className="text-[9px] bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-1.5 rounded uppercase font-bold">Saved</span>}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-slate-400 truncate">
-                        {item.state}{item.country !== 'India' ? `, ${item.country}` : ''}
+                      <div className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
+                        {item.state}{item.country && item.country !== 'India' ? `, ${item.country}` : ''}
                       </div>
                    </div>
                 </li>

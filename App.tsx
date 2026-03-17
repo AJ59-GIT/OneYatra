@@ -37,6 +37,9 @@ const ItineraryBuilderPage = lazy(() => import('./pages/ItineraryBuilderPage'));
 const CorporateDashboardPage = lazy(() => import('./pages/CorporateDashboardPage'));
 const GroupBookingPage = lazy(() => import('./pages/GroupBookingPage'));
 const GiftCardsPage = lazy(() => import('./pages/GiftCardsPage'));
+const RoutePlannerPage = lazy(() => import('./pages/RoutePlannerPage'));
+const LocationSearchPage = lazy(() => import('./pages/LocationSearchPage'));
+const CompleteProfilePage = lazy(() => import('./pages/CompleteProfilePage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 
@@ -172,6 +175,9 @@ const AppContent = () => {
               <Route path="/corporate" element={isLoggedIn ? <CorporateDashboardPage /> : <Navigate to="/login" />} />
               <Route path="/group-booking" element={isLoggedIn ? <GroupBookingPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
               <Route path="/gift-cards" element={isLoggedIn ? <GiftCardsPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
+              <Route path="/route-planner" element={isLoggedIn ? <RoutePlannerPage /> : <Navigate to="/login" />} />
+              <Route path="/location-search" element={isLoggedIn ? <LocationSearchPage /> : <Navigate to="/login" />} />
+              <Route path="/complete-profile" element={isLoggedIn ? <CompleteProfilePage /> : <Navigate to="/login" />} />
               <Route path="/privacy" element={isLoggedIn ? <PrivacyPolicyPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
               <Route path="/terms" element={isLoggedIn ? <TermsPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
               

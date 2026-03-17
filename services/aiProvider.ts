@@ -22,15 +22,24 @@ const withRetry = async <T>(fn: () => Promise<T>, retries = 3, delay = 1000): Pr
 export const fetchTravelOptionsInternal = async (
   params: SearchParams
 ): Promise<RouteResponse> => {
-  const apiKey = process.env.API_KEY;
+  const rawApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  const apiKey = rawApiKey?.trim();
 
-  // 1. Fetch Real Road Distance & Duration
-  const routeData = await getRoadDistance(params.origin, params.destination);
-  const { distance: realDistance, duration: realDuration } = routeData;
+  // 1. Get Road Distance & Duration (Use provided values or fetch if missing)
+  let realDistance = params.roadDistance;
+  let realDuration = params.roadDuration;
+
+  if (realDistance === undefined || realDuration === undefined) {
+    console.log(`Fetching road data for ${params.origin} to ${params.destination} (not provided in params)`);
+    const routeData = await getRoadDistance(params.origin, params.destination);
+    realDistance = routeData.distance;
+    realDuration = routeData.duration;
+  }
+  
   console.log(`Real Road Data for ${params.origin} to ${params.destination}: ${realDistance} km, ${realDuration} mins`);
 
-  if (!apiKey) {
-    console.warn("No API_KEY found. Returning mock data.");
+  if (!apiKey || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_')) {
+    console.warn("No valid GEMINI_API_KEY found. Returning mock data.");
     return mockTravelData(params, realDistance, realDuration);
   }
 
@@ -237,8 +246,12 @@ export const fetchTravelOptionsInternal = async (
 };
 
 export const chatWithAIInternal = async (message: string, history: ChatMessage[] = []): Promise<string> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) return "I'm in offline mode right now. How can I help you with your travel plans?";
+  const rawApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  const apiKey = rawApiKey?.trim();
+  
+  if (!apiKey || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_')) {
+    return "I'm in offline mode right now (API key not configured). How can I help you with your travel plans?";
+  }
 
   const ai = new GoogleGenAI({ apiKey });
   const chat = ai.chats.create({
