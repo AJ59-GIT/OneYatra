@@ -16,7 +16,8 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 let firebaseConfigJson: any = {};
 try {
   // @ts-ignore - Dynamic import might fail if file is missing
-  const configModule = await import("../firebase-applet-config.json");
+  // Using @vite-ignore to prevent Vite from trying to resolve this at build time
+  const configModule = await import(/* @vite-ignore */ "../firebase-applet-config.json");
   firebaseConfigJson = configModule.default || configModule;
 } catch (e) {
   console.warn("firebase-applet-config.json not found, relying on environment variables.");
