@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user profile information and preferences.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "dob": { "type": "string" },
+        "gender": { "type": "string", "enum": ["M", "F", "O"] },
+        "avatar": { "type": "string" },
+        "loyaltyPoints": { "type": "number" },
+        "walletBalance": { "type": "number" }
+      },
+      "required": ["email", "name"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents indexed by their Firebase Auth UID."
+    }
+  }
+}

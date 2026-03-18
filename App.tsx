@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import { Header } from './components/Header';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
+import CompleteProfilePage from './pages/CompleteProfilePage';
 import { SMSNotification } from './components/SMSNotification';
 import { BottomNavigation } from './components/BottomNavigation';
 import { SearchParams, AppView, TravelOption, TripSegment, Booking } from './types';
@@ -39,7 +40,6 @@ const GroupBookingPage = lazy(() => import('./pages/GroupBookingPage'));
 const GiftCardsPage = lazy(() => import('./pages/GiftCardsPage'));
 const RoutePlannerPage = lazy(() => import('./pages/RoutePlannerPage'));
 const LocationSearchPage = lazy(() => import('./pages/LocationSearchPage'));
-const CompleteProfilePage = lazy(() => import('./pages/CompleteProfilePage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 

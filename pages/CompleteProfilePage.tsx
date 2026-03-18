@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Phone, Calendar, UserCircle, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { User as UserIcon, Phone, Calendar, UserCircle, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { getCurrentUser, updateUserProfile } from '../services/authService';
 import { UserProfile } from '../types';
@@ -157,7 +157,7 @@ const CompleteProfilePage: React.FC = () => {
               {/* Gender */}
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700 dark:text-slate-300 flex items-center gap-2">
-                  <User className="h-4 w-4 text-brand-500" />
+                  <UserIcon className="h-4 w-4 text-brand-500" />
                   Gender
                 </label>
                 <div className="flex gap-2">

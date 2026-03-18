@@ -24,6 +24,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const skipNextFetch = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -54,7 +55,8 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (value.length < 2) {
+      if (value.length < 2 || skipNextFetch.current) {
+         if (skipNextFetch.current) skipNextFetch.current = false;
          setSuggestions([]); 
          return;
       }
@@ -70,7 +72,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
       }
     };
 
-    const timer = setTimeout(fetchSuggestions, 300); // 300ms Debounce
+    const timer = setTimeout(fetchSuggestions, 200); // 200ms Debounce
     return () => clearTimeout(timer);
   }, [value, userCoords]);
 
@@ -92,6 +94,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   };
 
   const selectSuggestion = (s: LocationSuggestion) => {
+    skipNextFetch.current = true;
     onChange(s.fullAddress || s.city, s);
     setIsOpen(false);
     setSuggestions([]);

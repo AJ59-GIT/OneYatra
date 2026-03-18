@@ -14,7 +14,8 @@ import {
   signInWithPhoneNumber,
   ConfirmationResult
 } from "firebase/auth";
-import { auth, googleProvider } from "./firebase";
+import { doc, getDoc, setDoc, getDocFromServer } from "firebase/firestore";
+import { auth, googleProvider, db } from "./firebase";
 
 const CURRENT_USER_KEY = 'oneyatra_current_user';
 
@@ -52,14 +53,39 @@ export const verifyOTP = async (confirmationResult: ConfirmationResult, otp: str
 
 // Initialize sync from Firebase to LocalStorage
 export const initAuthListener = (callback: (user: UserProfile | null, rawUser: User | null) => void) => {
-  return onAuthStateChanged(auth, (user) => {
+  return onAuthStateChanged(auth, async (user) => {
     if (user) {
-      const profile: UserProfile = {
+      let profile: UserProfile = {
         email: user.email || '',
         name: user.displayName || 'User',
         avatar: user.photoURL || undefined,
         preferences: {}
       };
+
+      // Try to fetch full profile from Firestore
+      try {
+        const docRef = doc(db, "users", user.uid);
+        // Use getDocFromServer to ensure we're getting the latest data and to help debug connection issues
+        const docSnap = await getDocFromServer(docRef);
+        if (docSnap.exists()) {
+          profile = { ...profile, ...docSnap.data() as UserProfile };
+        } else {
+          // Create initial profile if it doesn't exist
+          await setDoc(docRef, profile);
+        }
+      } catch (e: any) {
+        console.error("Failed to fetch profile from Firestore:", e.message || e);
+        // If it's an offline error, we still want to use the local profile if available
+        if (e.message?.includes('offline')) {
+          const localData = localStorage.getItem(CURRENT_USER_KEY);
+          if (localData) {
+            try {
+              profile = JSON.parse(localData);
+            } catch (err) {}
+          }
+        }
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));
         localStorage.setItem('oneyatra_user', 'true');
@@ -159,10 +185,15 @@ export const updateUserProfile = async (profile: UserProfile): Promise<boolean> 
   if (!user) return false;
 
   try {
+    // Update Firebase Auth profile
     await updateProfile(user, { 
       displayName: profile.name,
       photoURL: profile.avatar
     });
+
+    // Update Firestore profile
+    await setDoc(doc(db, "users", user.uid), profile, { merge: true });
+
     // Update local storage as well
     if (typeof window !== 'undefined') {
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));

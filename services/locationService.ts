@@ -162,11 +162,18 @@ const getGeminiSuggestions = async (query: string): Promise<LocationSuggestion[]
   }
 };
 
+const searchCache = new Map<string, LocationSuggestion[]>();
+
 export const searchLocations = async (query: string, biasCoords?: { lat: number, lng: number }): Promise<LocationSuggestion[]> => {
   if (!query || query.length < 2) return [];
 
   const q = query.toLowerCase();
-  
+  const cacheKey = `${q}_${biasCoords?.lat.toFixed(2)}_${biasCoords?.lng.toFixed(2)}`;
+
+  if (searchCache.has(cacheKey)) {
+    return searchCache.get(cacheKey)!;
+  }
+
   // 1. Fetch Saved Addresses from User Profile
   const user = getCurrentUser();
   const savedSuggestions: LocationSuggestion[] = [];
@@ -264,12 +271,15 @@ export const searchLocations = async (query: string, biasCoords?: { lat: number,
   
   // De-duplicate by ID or coordinates
   const seen = new Set();
-  return allSuggestions.filter(s => {
+  const results = allSuggestions.filter(s => {
     const key = `${s.lat.toFixed(4)},${s.lng.toFixed(4)}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+
+  searchCache.set(cacheKey, results);
+  return results;
 };
 
 export const getCityFromCoordinates = async (lat: number, lng: number): Promise<string | null> => {
