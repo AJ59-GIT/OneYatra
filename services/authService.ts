@@ -66,23 +66,28 @@ export const initAuthListener = (callback: (user: UserProfile | null, rawUser: U
       try {
         const docRef = doc(db, "users", user.uid);
         // Use getDoc to allow for offline persistence/cache fallback
+        console.log("Fetching user profile from Firestore for UID:", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
+          console.log("Profile found in Firestore.");
           profile = { ...profile, ...docSnap.data() as UserProfile };
         } else {
+          console.log("No profile found in Firestore, creating one.");
           // Create initial profile if it doesn't exist
           await setDoc(docRef, profile);
         }
       } catch (e: any) {
-        console.error("Failed to fetch profile from Firestore:", e.message || e);
-        // If it's an offline error, we still want to use the local profile if available
-        if (e.message?.includes('offline')) {
+        if (e.message?.includes('offline') || e.code === 'unavailable') {
+          console.warn("Firestore is offline/unavailable. Using local profile data if available.");
+          // If it's an offline error, we still want to use the local profile if available
           const localData = localStorage.getItem(CURRENT_USER_KEY);
           if (localData) {
             try {
               profile = JSON.parse(localData);
             } catch (err) {}
           }
+        } else {
+          console.error("Failed to fetch profile from Firestore:", e.code, e.message || e);
         }
       }
 

@@ -10,7 +10,17 @@ import {
   persistentMultipleTabManager 
 } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import firebaseConfigJson from "../firebase-applet-config.json";
+
+// We use a dynamic import for the config file to prevent build failures 
+// on platforms like Render where this file might not be present.
+let firebaseConfigJson: any = {};
+try {
+  // @ts-ignore - Dynamic import might fail if file is missing
+  const configModule = await import("../firebase-applet-config.json");
+  firebaseConfigJson = configModule.default || configModule;
+} catch (e) {
+  console.warn("firebase-applet-config.json not found, relying on environment variables.");
+}
 
 // Use environment variables for configuration, supporting both Vite and Node.js
 const getEnv = (key: string) => {
@@ -39,7 +49,10 @@ const getEnv = (key: string) => {
   
   const mappedKey = mapping[key];
   if (mappedKey && firebaseConfigJson && (firebaseConfigJson as any)[mappedKey]) {
-    return (firebaseConfigJson as any)[mappedKey];
+    const val = (firebaseConfigJson as any)[mappedKey];
+    if (val && val !== "TODO_KEYHERE" && val !== "TODO_PROJECT_ID") {
+      return val;
+    }
   }
   
   return undefined;
@@ -67,17 +80,17 @@ console.log("Firebase Config Initialization:", {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with settings for better reliability in iframe/preview environments
-// Note: initializeFirestore can only be called once.
 let db: any;
 try {
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     }),
-    experimentalForceLongPolling: true, // Force long polling to bypass potential WebSocket issues
+    experimentalForceLongPolling: true,
   }, firestoreDatabaseId);
+  console.log("Firestore initialized with long polling and persistent cache.");
 } catch (e) {
-  console.warn("Firestore already initialized, using getFirestore fallback");
+  console.warn("Firestore initializeFirestore failed, falling back to getFirestore:", e);
   db = getFirestore(app, firestoreDatabaseId);
 }
 
@@ -99,14 +112,22 @@ export const emailProvider = new EmailAuthProvider();
 
 // Validate Connection to Firestore (Critical Constraint)
 async function testConnection() {
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "TODO_KEYHERE") {
+    console.error("CRITICAL: Firebase API Key is missing or invalid. Please check your configuration.");
+    return;
+  }
+
   try {
     // Use getDocFromServer to test real connection
+    console.log("Testing Firestore connection...");
     await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("Firestore connection test successful (or permission denied, which means we reached the server).");
   } catch (error: any) {
-    if (error.message?.includes('offline') || error.code === 'unavailable') {
-      console.error("CRITICAL: Please check your Firebase configuration. The client is offline.");
+    console.error("Firestore Connection Test Error:", error.code, error.message);
+    if (error.message?.includes('offline') || error.code === 'unavailable' || error.code === 'failed-precondition') {
+      console.error("CRITICAL: Firestore is unavailable. This is often due to WebSocket blocking in the preview. Long polling is enabled, but the connection is still failing.");
+      console.error("Please ensure you have created the Firestore database in your Firebase Console for project:", firebaseConfig.projectId);
     }
-    // Skip logging for other errors (like permission denied), as this is simply a connection test.
   }
 }
 
