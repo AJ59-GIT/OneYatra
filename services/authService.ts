@@ -65,8 +65,8 @@ export const initAuthListener = (callback: (user: UserProfile | null, rawUser: U
       // Try to fetch full profile from Firestore
       try {
         const docRef = doc(db, "users", user.uid);
-        // Use getDocFromServer to ensure we're getting the latest data and to help debug connection issues
-        const docSnap = await getDocFromServer(docRef);
+        // Use getDoc to allow for offline persistence/cache fallback
+        const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           profile = { ...profile, ...docSnap.data() as UserProfile };
         } else {
