@@ -310,7 +310,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
         isValid = false; 
       }
       if (!p.gender) { newErrors[`gender_${idx}`] = 'Gender is required'; isValid = false; }
-      if (['FLIGHT', 'TRAIN'].includes(option.mode)) {
+      if (['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode)) {
          if(!p.idType) {
            newErrors[`idType_${idx}`] = 'ID Type required';
            isValid = false;
@@ -535,7 +535,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
       }
       if (!p.gender) newErrors[`gender_${i}`] = 'Gender is required';
       
-      if ((option.mode === 'FLIGHT' || option.mode === 'TRAIN')) {
+      if ((option.mode === 'FLIGHT' || option.mode === 'TRAIN' || option.mode === 'BUS')) {
         if (!p.idType) newErrors[`idType_${i}`] = 'ID type required';
         if (!p.idNumber) newErrors[`idNumber_${i}`] = 'ID number required';
         else {

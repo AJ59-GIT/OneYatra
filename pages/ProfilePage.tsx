@@ -108,7 +108,7 @@ export const ProfilePage = ({ onBack, onLogout }: ProfilePageProps) => {
       setOriginalUser(JSON.parse(JSON.stringify(user)));
       showToast("Profile updated successfully");
     } else {
-      showToast("Failed to update profile", "error");
+      showToast("Update timed out or failed. Changes saved locally.", "error");
     }
   };
 

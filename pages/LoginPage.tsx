@@ -471,12 +471,22 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
         <Input 
           label="Confirm Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           required
           placeholder="Confirm password"
           value={confirmPassword}
           onChange={e => setConfirmPassword(e.target.value)}
           error={formErrors.confirmPassword}
+          rightElement={
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          }
         />
 
         <Button type="submit" className="w-full mt-4" size="lg" isLoading={isLoading}>

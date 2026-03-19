@@ -52,7 +52,7 @@ const PageLoader = () => (
 const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn, loading, logout } = useAuth();
+  const { isLoggedIn, loading, isAuthReady, user, logout } = useAuth();
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
   const [selectedOption, setSelectedOption] = useState<TravelOption | null>(null);
   const [bookingContext, setBookingContext] = useState<{origin: string, destination: string} | null>(null);
@@ -61,11 +61,24 @@ const AppContent = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    if (isAuthReady && !loading) {
       if (isLoggedIn) {
         requestPushPermission();
         if(!localStorage.getItem('oneyatra_onboarding_seen')) {
             setShowOnboarding(true);
+        }
+        
+        // Check if profile is complete
+        const isProfileComplete = user?.name && user?.phone && user?.dob && user?.gender;
+        
+        if (!isProfileComplete && location.pathname !== '/complete-profile') {
+          navigate('/complete-profile');
+          return;
+        }
+
+        // Redirect away from login or complete-profile if already logged in and profile complete
+        if (location.pathname === '/login' || (isProfileComplete && location.pathname === '/complete-profile')) {
+          navigate('/');
         }
       } else {
         if (location.pathname !== '/login') {
@@ -73,7 +86,7 @@ const AppContent = () => {
         }
       }
     }
-  }, [isLoggedIn, loading, location.pathname, navigate]);
+  }, [isLoggedIn, loading, isAuthReady, location.pathname, navigate, user]);
 
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -190,8 +203,8 @@ const AppContent = () => {
       {location.pathname !== '/login' && <BottomNavigation currentView={currentView as AppView} />}
       {showOnboarding && <OnboardingGuide onComplete={() => setShowOnboarding(false)} />}
       <CookieConsent />
-      <SOSButton />
-      <ChatWidget />
+      {location.pathname !== '/login' && <SOSButton />}
+      {location.pathname !== '/login' && <ChatWidget />}
     </div>
   );
 };

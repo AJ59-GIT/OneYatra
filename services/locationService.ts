@@ -119,8 +119,23 @@ export const getRoadDistance = async (
   };
 };
 
-const getGeminiSuggestions = async (query: string): Promise<LocationSuggestion[]> => {
-  const rawApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+export const getGeminiSuggestions = async (query: string): Promise<LocationSuggestion[]> => {
+  // On client, use the proxy API to avoid exposing keys and CORS issues
+  if (typeof window !== 'undefined') {
+    try {
+      const response = await fetch(`/api/locations?source=ai&query=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (e) {
+      console.error("Failed to fetch location suggestions from proxy", e);
+      return [];
+    }
+  }
+
+  // Safe access for server environment
+  const rawApiKey = (typeof process !== 'undefined' && process.env) ? (process.env.GEMINI_API_KEY || process.env.API_KEY) : null;
   const apiKey = rawApiKey?.trim();
 
   if (!apiKey || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_')) {
@@ -206,7 +221,7 @@ export const searchLocations = async (query: string, biasCoords?: { lat: number,
     // Gemini with a strict timeout
     (async () => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s timeout for AI
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout for AI
       try {
         return await getGeminiSuggestions(query);
       } catch (e) {
@@ -223,35 +238,39 @@ export const searchLocations = async (query: string, biasCoords?: { lat: number,
         
         const params = new URLSearchParams({
           q: query,
-          limit: '10',
+          limit: '15', // Increased limit for better variety
           lat: lat.toString(),
           lon: lon.toString(),
           lang: 'en'
         });
 
-        const response = await fetch(getPhotonPath(params.toString()));
+        // Add India bias if no coords provided
+        const path = getPhotonPath(params.toString());
+        const response = await fetch(path);
         const data = await response.json();
         
         if (!data || !data.features) return [];
 
-        return data.features.map((f: any) => {
-          const p = f.properties;
-          const name = p.name || p.city || p.street || p.district || 'Unknown Location';
-          const city = p.city || p.district || p.county || p.town || p.village || '';
-          const state = p.state || '';
-          const country = p.country || '';
-          
-          return {
-            id: `api-${p.osm_id || Math.random()}`,
-            city: name,
-            state: [city, state].filter(Boolean).join(', '),
-            country: country,
-            type: p.osm_value === 'airport' ? 'AIRPORT' : (p.type === 'house' ? 'ADDRESS' : 'CITY'),
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-            fullAddress: [name, city, state, country].filter(Boolean).join(', ')
-          } as LocationSuggestion;
-        });
+        return data.features
+          .filter((f: any) => f.properties.country === 'India' || !f.properties.country) // Filter for India
+          .map((f: any) => {
+            const p = f.properties;
+            const name = p.name || p.city || p.street || p.district || 'Unknown Location';
+            const city = p.city || p.district || p.county || p.town || p.village || '';
+            const state = p.state || '';
+            const country = p.country || 'India';
+            
+            return {
+              id: `api-${p.osm_id || Math.random()}`,
+              city: name,
+              state: [city, state].filter(Boolean).join(', '),
+              country: country,
+              type: p.osm_value === 'airport' ? 'AIRPORT' : (p.type === 'house' ? 'ADDRESS' : 'CITY'),
+              lat: f.geometry.coordinates[1],
+              lng: f.geometry.coordinates[0],
+              fullAddress: [name, city, state, country].filter(Boolean).join(', ')
+            } as LocationSuggestion;
+          });
       } catch (error) {
         console.error("Photon API error:", error);
         return [];

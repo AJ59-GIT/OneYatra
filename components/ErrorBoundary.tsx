@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <RefreshCw className="h-4 w-4 mr-2" /> Reload App
              </Button>
           </div>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
+          {this.state.error && (
              <pre className="mt-8 p-4 bg-gray-100 rounded text-left text-xs text-red-600 overflow-auto max-w-lg">
                 {this.state.error.toString()}
              </pre>

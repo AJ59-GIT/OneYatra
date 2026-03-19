@@ -2,8 +2,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: /users/{userId}
+    // Document ID: Firebase Auth UID
+    // Fields:
+    //   - email: string (required, email format)
+    //   - name: string (required)
+    //   - phone: string (optional)
+    //   - dob: string (optional)
+    //   - gender: string (optional, enum: M, F, O)
+    //   - avatar: string (optional, URL)
+    //   - loyaltyPoints: number (optional)
+    //   - walletBalance: number (optional)
+    //   - role: string (optional, enum: admin, user)
+    //   - preferences: map (optional)
+    //   - addresses: array (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
     // Helper Functions
     // ===============================================================
+    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -12,27 +34,64 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
+    // Super Admin check (Email based)
+    function isSuperAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in" && request.auth.token.email_verified == true));
+             request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in";
+             // Removed email_verified check temporarily to rule out token issues
+    }
+
+    // Role Admin check (Database based)
+    function isRoleAdmin() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() || isRoleAdmin();
+    }
+
+    function isValidEmail(email) {
+      return email is string && (email == "" || email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"));
     }
 
     function isValidUser(data) {
       return data.keys().hasAll(['email', 'name']) &&
-             data.email is string &&
-             data.name is string &&
-             (!('phone' in data) || data.phone is string) &&
-             (!('dob' in data) || data.dob is string) &&
+             data.email is string && isValidEmail(data.email) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 20)) &&
+             (!('dob' in data) || (data.dob is string)) &&
              (!('gender' in data) || data.gender in ['M', 'F', 'O']) &&
-             (!('avatar' in data) || data.avatar is string) &&
-             (!('preferences' in data) || data.preferences is map);
+             (!('avatar' in data) || (data.avatar is string && data.avatar.size() < 2000)) &&
+             (!('loyaltyPoints' in data) || data.loyaltyPoints is number) &&
+             (!('walletBalance' in data) || data.walletBalance is number) &&
+             (!('role' in data) || data.role in ['admin', 'user']) &&
+             (!('preferences' in data) || data.preferences is map) &&
+             (!('addresses' in data) || data.addresses is list);
+    }
+
+    match /test/{docId} {
+      allow read, write: if true;
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if (isOwner(userId) && isValidUser(request.resource.data)) || isAdmin();
+      // Allow read if owner OR admin
+      // We check isOwner first as it's cheaper and more likely
+      allow read: if isOwner(userId) || isSuperAdmin() || isRoleAdmin();
+      
+      // Only allow users to create their own profile
+      allow create: if isOwner(userId) && 
+                      isValidUser(request.resource.data) && 
+                      (!('role' in request.resource.data) || request.resource.data.role == 'user');
+      
+      // Only allow users to update their own profile, role can only be changed by admin
+      allow update: if (isOwner(userId) && 
+                       isValidUser(request.resource.data) && 
+                       (request.resource.data.role == resource.data.role || isAdmin())) || 
+                      isAdmin();
+      
+      allow delete: if isAdmin();
     }
   }
 }

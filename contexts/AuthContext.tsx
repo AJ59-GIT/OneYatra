@@ -9,6 +9,7 @@ interface AuthContextType {
   firebaseUser: User | null;
   loading: boolean;
   isLoggedIn: boolean;
+  isAuthReady: boolean;
   logout: () => Promise<void>;
 }
 
@@ -18,12 +19,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<UserProfile | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
+    console.log("AuthProvider: Initializing auth listener...");
     const unsubscribe = initAuthListener((profile, rawUser) => {
+      console.log("AuthProvider: Auth state changed.", { hasProfile: !!profile, hasRawUser: !!rawUser });
       setUser(profile);
       setFirebaseUser(rawUser);
       setLoading(false);
+      setIsAuthReady(true);
     });
 
     return () => unsubscribe();
@@ -39,7 +44,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     firebaseUser,
     loading,
-    isLoggedIn: !!user,
+    isLoggedIn: !!firebaseUser,
+    isAuthReady,
     logout
   };
 
