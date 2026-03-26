@@ -17,12 +17,34 @@
         "addresses": { "type": "array" }
       },
       "required": ["email", "name"]
+    },
+    "UserDocument": {
+      "title": "User Document",
+      "description": "Stores metadata for user uploaded documents (Passport, Aadhaar, etc.)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["PASSPORT", "VISA", "AADHAAR", "PAN", "VOTER_ID", "DRIVING_LICENSE", "OTHER"] },
+        "number": { "type": "string" },
+        "holderName": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "expiryDate": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "dob": { "type": "string" },
+        "gender": { "type": "string", "enum": ["M", "F", "O"] },
+        "sharedWith": { "type": "array" }
+      },
+      "required": ["id", "type", "number", "holderName", "isVerified"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "User profile documents indexed by their Firebase Auth UID."
+    },
+    "/users/{userId}/documents/{docId}": {
+      "schema": "UserDocument",
+      "description": "Subcollection of documents belonging to a user."
     }
   }
 }

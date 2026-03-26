@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, Eye, EyeOff, Upload, Trash2, Calendar, FileText, Lock, Plus, ArrowLeft, ScanLine, AlertTriangle, Share2, Download, Cloud, CheckCircle, X } from 'lucide-react';
 import { UserDocument } from '../types';
-import { getDocuments, saveDocument, deleteDocument, performOCR, checkExpiry } from '../services/documentService';
+import { getDocuments, saveDocument, deleteDocument, performOCR, checkExpiry, uploadDocumentFile } from '../services/documentService';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useSettings } from '../contexts/SettingsContext';
@@ -16,20 +16,29 @@ export const DocumentsVaultPage = ({ onBack }: DocumentsVaultPageProps) => {
   const { t } = useSettings();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [visibleDocs, setVisibleDocs] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
   
   // OCR / Upload State
   const [isUploading, setIsUploading] = useState(false);
   const [scanStep, setScanStep] = useState<'IDLE' | 'SCANNING' | 'REVIEW'>('IDLE');
   const [scannedData, setScannedData] = useState<Partial<UserDocument>>({});
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Share Modal
   const [shareDocId, setShareDocId] = useState<string | null>(null);
   const [shareEmail, setShareEmail] = useState('');
 
+  const fetchDocs = async () => {
+    setIsLoading(true);
+    const docs = await getDocuments();
+    setDocuments(docs);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    setDocuments(getDocuments());
+    fetchDocs();
   }, []);
 
   const toggleVisibility = (id: string) => {
@@ -39,15 +48,22 @@ export const DocumentsVaultPage = ({ onBack }: DocumentsVaultPageProps) => {
     setVisibleDocs(newSet);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string, fileUrl?: string) => {
     if (window.confirm("Are you sure you want to delete this document? This cannot be undone.")) {
-      setDocuments(deleteDocument(id));
+      try {
+        await deleteDocument(id, fileUrl);
+        await fetchDocs();
+      } catch (err) {
+        alert("Failed to delete document.");
+      }
     }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setSelectedFile(file);
 
     // Create preview
     const reader = new FileReader();
@@ -82,7 +98,7 @@ export const DocumentsVaultPage = ({ onBack }: DocumentsVaultPageProps) => {
     }
   };
 
-  const saveScannedDoc = () => {
+  const saveScannedDoc = async () => {
     if (!scannedData.number || !scannedData.holderName) {
         alert("Name and Number are required.");
         return;
@@ -95,22 +111,41 @@ export const DocumentsVaultPage = ({ onBack }: DocumentsVaultPageProps) => {
       return;
     }
 
-    const newDoc: UserDocument = {
-      id: `doc_${Date.now()}`,
-      type: scannedData.type || 'OTHER',
-      number: validation.normalized,
-      holderName: scannedData.holderName,
-      expiryDate: scannedData.expiryDate,
-      dob: scannedData.dob,
-      gender: scannedData.gender,
-      isVerified: true,
-      fileUrl: filePreview || undefined
-    };
+    setScanStep('SCANNING'); // Re-use scanning state for upload progress feel
+    
+    try {
+      let finalFileUrl = filePreview || undefined;
+      
+      // Upload actual file to Firebase Storage if selected
+      if (selectedFile) {
+        finalFileUrl = await uploadDocumentFile(selectedFile);
+      }
 
-    setDocuments(saveDocument(newDoc));
-    setScanStep('IDLE');
-    setFilePreview(null);
-    setScannedData({});
+      const newDoc: UserDocument = {
+        id: `doc_${Date.now()}`,
+        type: scannedData.type || 'OTHER',
+        number: validation.normalized,
+        holderName: scannedData.holderName,
+        expiryDate: scannedData.expiryDate,
+        dob: scannedData.dob,
+        gender: scannedData.gender,
+        isVerified: true,
+        fileUrl: finalFileUrl
+      };
+
+      await saveDocument(newDoc);
+      await fetchDocs();
+      
+      setScanStep('IDLE');
+      setIsUploading(false);
+      setFilePreview(null);
+      setSelectedFile(null);
+      setScannedData({});
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Failed to save document to cloud storage.");
+      setScanStep('REVIEW');
+    }
   };
 
   const handleBackup = () => {
@@ -352,7 +387,7 @@ export const DocumentsVaultPage = ({ onBack }: DocumentsVaultPageProps) => {
                                  <button className="text-gray-400 hover:text-green-600" title="Download PDF" onClick={() => alert("Simulating Encrypted PDF Download...")}>
                                      <Download className="h-4 w-4" />
                                  </button>
-                                 <button className="text-gray-400 hover:text-red-500" title="Delete" onClick={() => handleDelete(doc.id)}>
+                                 <button className="text-gray-400 hover:text-red-500" title="Delete" onClick={() => handleDelete(doc.id, doc.fileUrl)}>
                                      <Trash2 className="h-4 w-4" />
                                  </button>
                              </div>

@@ -114,7 +114,11 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
     setWalletBalance(getWalletBalance());
 
     // Load Vault
-    setVaultDocs(getDocuments());
+    const fetchVault = async () => {
+        const docs = await getDocuments();
+        setVaultDocs(docs);
+    };
+    fetchVault();
 
     // Load Saved Travelers from Profile
     let availableSaved: SavedTraveler[] = [];

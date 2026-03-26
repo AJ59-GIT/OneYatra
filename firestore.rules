@@ -75,23 +75,28 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /users/{userId}/documents/{docId} {
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in");
+    }
+
     match /users/{userId} {
       // Allow read if owner OR admin
-      // We check isOwner first as it's cheaper and more likely
-      allow read: if isOwner(userId) || isSuperAdmin() || isRoleAdmin();
+      allow read: if isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in");
       
       // Only allow users to create their own profile
-      allow create: if isOwner(userId) && 
+      allow create: if isAuthenticated() && request.auth.uid == userId && 
                       isValidUser(request.resource.data) && 
                       (!('role' in request.resource.data) || request.resource.data.role == 'user');
       
       // Only allow users to update their own profile, role can only be changed by admin
-      allow update: if (isOwner(userId) && 
-                       isValidUser(request.resource.data) && 
-                       (request.resource.data.role == resource.data.role || isAdmin())) || 
-                      isAdmin();
+      allow update: if isAuthenticated() && (
+                       (request.auth.uid == userId && 
+                        isValidUser(request.resource.data) && 
+                        (request.resource.data.role == resource.data.role || request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in")) || 
+                       request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in"
+                     );
       
-      allow delete: if isAdmin();
+      allow delete: if request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in";
     }
   }
 }

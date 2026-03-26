@@ -10,6 +10,7 @@ import {
   persistentMultipleTabManager 
 } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getStorage } from "firebase/storage";
 // Use dynamic import for the config file to prevent build failures if it's missing (e.g., in CI/CD)
 // We use a dynamically constructed path to prevent Vite/Rollup from trying to resolve it statically at build time
 const CONFIG_FILE = "firebase-applet-config.json";
@@ -75,6 +76,7 @@ if (typeof window !== 'undefined') {
 let app: any;
 let db: any;
 let auth: any;
+let storage: any;
 let googleProvider: any;
 let emailProvider: any;
 let analytics: any = null;
@@ -106,6 +108,7 @@ if (isConfigValid(firebaseConfig)) {
   }
 
   auth = getAuth(app);
+  storage = getStorage(app);
   googleProvider = new GoogleAuthProvider();
   emailProvider = new EmailAuthProvider();
 } else {
@@ -114,11 +117,12 @@ if (isConfigValid(firebaseConfig)) {
   app = null;
   db = null;
   auth = null;
+  storage = null;
   googleProvider = null;
   emailProvider = null;
 }
 
-export { auth, db, googleProvider, emailProvider, analytics };
+export { auth, db, storage, googleProvider, emailProvider, analytics };
 export default app;
 
 // Validate Connection to Firestore (Critical Constraint)

@@ -1,36 +1,83 @@
 
 import { UserDocument } from "../types";
+import { db, auth, storage } from "./firebase";
+import { 
+  collection, 
+  getDocs, 
+  setDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  orderBy 
+} from "firebase/firestore";
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
+} from "firebase/storage";
+import { handleFirestoreError, OperationType } from "../utils/firestoreErrorHandler";
 
-const VAULT_STORAGE_KEY = 'oneyatra_docs_vault';
+// --- Firebase Management ---
 
-// --- Local Storage Management ---
-
-export const getDocuments = (): UserDocument[] => {
+export const getDocuments = async (): Promise<UserDocument[]> => {
+  if (!auth.currentUser) return [];
+  
+  const path = `users/${auth.currentUser.uid}/documents`;
   try {
-    const data = localStorage.getItem(VAULT_STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const q = query(
+      collection(db, path),
+      orderBy("id", "desc")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as UserDocument);
   } catch (e) {
+    handleFirestoreError(e, OperationType.GET, path);
     return [];
   }
 };
 
-export const saveDocument = (doc: UserDocument): UserDocument[] => {
-  const current = getDocuments();
-  // Check update or insert
-  const index = current.findIndex(d => d.id === doc.id);
-  if (index !== -1) {
-    current[index] = doc;
-  } else {
-    current.unshift(doc);
+export const saveDocument = async (userDoc: UserDocument): Promise<void> => {
+  if (!auth.currentUser) return;
+  
+  const path = `users/${auth.currentUser.uid}/documents/${userDoc.id}`;
+  try {
+    const docRef = doc(db, "users", auth.currentUser.uid, "documents", userDoc.id);
+    await setDoc(docRef, userDoc);
+  } catch (e) {
+    handleFirestoreError(e, OperationType.WRITE, path);
   }
-  localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(current));
-  return current;
 };
 
-export const deleteDocument = (id: string): UserDocument[] => {
-  const current = getDocuments().filter(d => d.id !== id);
-  localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(current));
-  return current;
+export const deleteDocument = async (id: string, fileUrl?: string): Promise<void> => {
+  if (!auth.currentUser) return;
+  
+  const path = `users/${auth.currentUser.uid}/documents/${id}`;
+  try {
+    // Delete metadata
+    const docRef = doc(db, "users", auth.currentUser.uid, "documents", id);
+    await deleteDoc(docRef);
+    
+    // Delete file from storage if url is provided
+    if (fileUrl) {
+      const fileRef = ref(storage, fileUrl);
+      await deleteObject(fileRef).catch(err => console.warn("File deletion failed:", err));
+    }
+  } catch (e) {
+    handleFirestoreError(e, OperationType.DELETE, path);
+  }
+};
+
+export const uploadDocumentFile = async (file: File): Promise<string> => {
+  if (!auth.currentUser) throw new Error("User not authenticated");
+  
+  const fileId = Math.random().toString(36).substring(2, 15);
+  const fileExt = file.name.split('.').pop();
+  const filePath = `users/${auth.currentUser.uid}/documents/${fileId}.${fileExt}`;
+  const fileRef = ref(storage, filePath);
+  
+  await uploadBytes(fileRef, file);
+  return await getDownloadURL(fileRef);
 };
 
 // --- Mock OCR Engine ---
