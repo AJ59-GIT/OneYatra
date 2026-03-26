@@ -10,7 +10,12 @@ import {
   persistentMultipleTabManager 
 } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import firebaseConfigJson from "../firebase-applet-config.json";
+// Use dynamic import for the config file to prevent build failures if it's missing (e.g., in CI/CD)
+// We use a dynamically constructed path to prevent Vite/Rollup from trying to resolve it statically at build time
+const CONFIG_FILE = "firebase-applet-config.json";
+const CONFIG_PATH = `../${CONFIG_FILE}`;
+const configModule = await import(CONFIG_PATH).catch(() => ({ default: {} }));
+const firebaseConfigJson = configModule.default || configModule;
 
 // Use environment variables for configuration, supporting both Vite and Node.js
 const getEnv = (key: string) => {
