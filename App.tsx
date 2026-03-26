@@ -69,16 +69,26 @@ const AppContent = () => {
         }
         
         // Check if profile is complete
-        const isProfileComplete = user?.name && user?.phone && user?.dob && user?.gender;
+        const isProfileComplete = !!(user?.name && user?.phone && user?.dob && user?.gender);
         
+        // Removed mandatory profile completion redirect to unblock user
+        /*
         if (!isProfileComplete && location.pathname !== '/complete-profile') {
           navigate('/complete-profile');
           return;
         }
+        */
 
-        // Redirect away from login or complete-profile if already logged in and profile complete
-        if (location.pathname === '/login' || (isProfileComplete && location.pathname === '/complete-profile')) {
+        // Redirect away from login if already logged in
+        if (location.pathname === '/login') {
           navigate('/');
+          return;
+        }
+        
+        // Redirect away from complete-profile if profile is already complete
+        if (isProfileComplete && location.pathname === '/complete-profile') {
+          navigate('/');
+          return;
         }
       } else {
         if (location.pathname !== '/login') {

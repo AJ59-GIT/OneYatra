@@ -248,20 +248,23 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-3">
-          <button 
+          <Button 
+            variant="outline"
             onClick={handleGoogleLogin}
+            isLoading={isLoading}
             className="flex-1 flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm bg-white dark:bg-slate-800 text-gray-700 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
           >
             <GoogleIcon />
             <span className="ml-2">Google</span>
-          </button>
-          <button 
+          </Button>
+          <Button 
+            variant="outline"
             onClick={() => alert("Apple Auth is coming soon!")}
             className="flex-1 flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm bg-black text-white font-medium hover:bg-gray-900 transition-colors"
           >
             <AppleIcon />
             <span className="ml-2">Apple</span>
-          </button>
+          </Button>
         </div>
 
         <div className="relative flex items-center py-2">
@@ -347,14 +350,6 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
       <p className="text-gray-500 dark:text-gray-400 mb-8 text-sm">Enter your credentials to continue.</p>
       
-      {successMsg && (
-        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-sm border-l-4 border-green-500">
-          {successMsg}
-        </div>
-      )}
-
-      <FormErrorSummary errors={formErrors} title="Login Failed" />
-
       <form onSubmit={handleEmailLogin} className="space-y-1">
         <Input 
           label="Email Address"
@@ -418,8 +413,6 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     <div className="animate-in fade-in slide-in-from-right-8 duration-300">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h2>
       <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">Join OneYatra for smart travel.</p>
-
-      <FormErrorSummary errors={formErrors} title="Registration Failed" />
 
       <form onSubmit={handleRegister} className="space-y-1">
         <Input
@@ -516,15 +509,10 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
       {successMsg ? (
         <div className="text-center">
-          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-sm border-l-4 border-green-500 flex flex-col items-center">
-             <div className="font-bold mb-1">Check your email</div>
-             {successMsg}
-          </div>
           <Button onClick={() => setStep('EMAIL_LOGIN')} className="w-full">Return to Login</Button>
         </div>
       ) : (
         <>
-          <FormErrorSummary errors={formErrors} />
           <form onSubmit={handleForgotPassword} className="space-y-4">
             <Input
               label="Email Address"
@@ -608,6 +596,12 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
          <div className="max-w-sm mx-auto w-full">
             <div id="recaptcha-container"></div>
+            <FormErrorSummary errors={formErrors} title="Login Issue" />
+            {successMsg && (
+              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-sm border-l-4 border-green-500">
+                {successMsg}
+              </div>
+            )}
             {step === 'SLIDES' && renderSlides()}
             {(step === 'PHONE' || step === 'OTP') && renderPhoneFlow()}
             {step === 'EMAIL_LOGIN' && renderEmailLogin()}

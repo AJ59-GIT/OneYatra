@@ -38,8 +38,15 @@ export const fetchTravelOptionsInternal = async (
   
   console.log(`Real Road Data for ${params.origin} to ${params.destination}: ${realDistance} km, ${realDuration} mins`);
 
-  if (!apiKey || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_')) {
-    console.warn("No valid GEMINI_API_KEY found. Returning mock data.");
+  const isValidFormat = apiKey && apiKey.startsWith('AIza') && apiKey.length > 20;
+
+  if (!isValidFormat || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_') || apiKey === 'undefined' || apiKey === 'null') {
+    console.warn("No valid GEMINI_API_KEY found or invalid format. Returning mock data.", { 
+      hasKey: !!apiKey, 
+      keyLength: apiKey?.length,
+      startsWithAIza: apiKey?.startsWith('AIza'),
+      isPlaceholder: apiKey === 'TODO_KEYHERE'
+    });
     return mockTravelData(params, realDistance, realDuration);
   }
 
@@ -249,7 +256,9 @@ export const chatWithAIInternal = async (message: string, history: ChatMessage[]
   const rawApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
   const apiKey = rawApiKey?.trim();
   
-  if (!apiKey || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_')) {
+  const isValidFormat = apiKey && apiKey.startsWith('AIza') && apiKey.length > 20;
+
+  if (!isValidFormat || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_') || apiKey === 'undefined' || apiKey === 'null') {
     return "I'm in offline mode right now (API key not configured). How can I help you with your travel plans?";
   }
 

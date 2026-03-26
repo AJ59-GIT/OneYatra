@@ -21,6 +21,7 @@ const getEnv = (key: string) => {
 };
 
 // Defensive check for JSON import structure
+console.log("firebaseConfigJson type:", typeof firebaseConfigJson, "keys:", Object.keys(firebaseConfigJson || {}));
 const rawConfig = (firebaseConfigJson as any).default || firebaseConfigJson;
 
 const firebaseConfig = {
@@ -50,6 +51,7 @@ const firestoreDatabaseId = rawConfig.firestoreDatabaseId || getEnv('VITE_FIREBA
 console.log("Firebase Config Initialization:", {
   projectId: firebaseConfig.projectId,
   hasApiKey: !!firebaseConfig.apiKey,
+  apiKeyPrefix: firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) : 'none',
   databaseId: firestoreDatabaseId,
   isValid: isConfigValid(firebaseConfig),
   configSource: rawConfig.projectId ? "config-file" : "env-vars"
@@ -59,7 +61,8 @@ if (typeof window !== 'undefined') {
   (window as any).FIREBASE_DEBUG = {
     config: firebaseConfig,
     isValid: isConfigValid(firebaseConfig),
-    json: firebaseConfigJson
+    json: firebaseConfigJson,
+    rawConfig: rawConfig
   };
 }
 

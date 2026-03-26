@@ -138,8 +138,14 @@ export const getGeminiSuggestions = async (query: string): Promise<LocationSugge
   const rawApiKey = (typeof process !== 'undefined' && process.env) ? (process.env.GEMINI_API_KEY || process.env.API_KEY) : null;
   const apiKey = rawApiKey?.trim();
 
-  if (!apiKey || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_')) {
-    console.warn("No valid GEMINI_API_KEY found for location suggestions.");
+  const isValidFormat = apiKey && apiKey.startsWith('AIza') && apiKey.length > 20;
+
+  if (!isValidFormat || apiKey === 'TODO_KEYHERE' || apiKey.includes('YOUR_') || apiKey === 'undefined' || apiKey === 'null') {
+    console.warn("No valid GEMINI_API_KEY found or invalid format for location suggestions.", {
+      hasKey: !!apiKey,
+      keyLength: apiKey?.length,
+      startsWithAIza: apiKey?.startsWith('AIza')
+    });
     return [];
   }
 

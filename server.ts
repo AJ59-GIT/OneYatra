@@ -7,6 +7,12 @@ import { getGeminiSuggestions } from "./services/locationService.ts";
 
 console.log("Initializing OneYatra Server...");
 console.log("Environment:", process.env.NODE_ENV || "development");
+console.log("Gemini API Key Configured:", !!(process.env.GEMINI_API_KEY || process.env.API_KEY));
+if (process.env.GEMINI_API_KEY) {
+  console.log("Gemini API Key Prefix:", process.env.GEMINI_API_KEY.substring(0, 4) + "...");
+} else if (process.env.API_KEY) {
+  console.log("API_KEY Prefix:", process.env.API_KEY.substring(0, 4) + "...");
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

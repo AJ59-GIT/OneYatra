@@ -14,7 +14,7 @@ import {
   signInWithPhoneNumber,
   ConfirmationResult
 } from "firebase/auth";
-import { doc, getDoc, setDoc, getDocFromServer } from "firebase/firestore";
+import { doc, getDoc, setDoc, getDocFromServer, onSnapshot } from "firebase/firestore";
 import { auth, googleProvider, db } from "./firebase";
 
 enum OperationType {
@@ -117,7 +117,7 @@ const sanitizeForFirestore = (data: any) => {
   return sanitized;
 };
 
-// Initialize sync from Firebase to LocalStorage
+// Initialize sync from Firebase to LocalStorage with real-time updates
 export const initAuthListener = (callback: (user: UserProfile | null, rawUser: User | null) => void) => {
   if (!auth) {
     console.warn("initAuthListener: Firebase Auth not initialized. Using local fallback.");
@@ -135,8 +135,18 @@ export const initAuthListener = (callback: (user: UserProfile | null, rawUser: U
     return () => {}; // No-op unsubscribe
   }
 
-  return onAuthStateChanged(auth, async (user) => {
+  let unsubscribeFirestore: (() => void) | null = null;
+
+  const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+    // Clean up previous Firestore listener if it exists
+    if (unsubscribeFirestore) {
+      unsubscribeFirestore();
+      unsubscribeFirestore = null;
+    }
+
     if (user) {
+      console.log("initAuthListener: Auth user detected:", user.uid);
+      
       let profile: UserProfile = {
         email: user.email || '',
         name: user.displayName || 'User',
@@ -148,63 +158,44 @@ export const initAuthListener = (callback: (user: UserProfile | null, rawUser: U
         profile.avatar = user.photoURL;
       }
 
-      // Try to fetch full profile from Firestore
+      // Set up real-time listener for Firestore profile
       if (db) {
-        try {
-          const docRef = doc(db, "users", user.uid);
-          console.log("initAuthListener: Fetching profile for UID:", user.uid);
-          
-          const profilePromise = getDoc(docRef);
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Firestore fetch timeout")), 5000)
-          );
-
-          let docSnap: any;
-          try {
-            docSnap = await Promise.race([profilePromise, timeoutPromise]);
-          } catch (e: any) {
-            console.error("initAuthListener: Fetch error:", e.code || e.message);
-            if (e.code === 'permission-denied') {
-              handleFirestoreError(e, OperationType.GET, `users/${user.uid}`);
+        const docRef = doc(db, "users", user.uid);
+        
+        unsubscribeFirestore = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            console.log("initAuthListener: Profile update received from Firestore.");
+            const data = docSnap.data() as UserProfile;
+            const updatedProfile = { ...profile, ...data };
+            
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedProfile));
+              localStorage.setItem('oneyatra_user', 'true');
             }
-            throw e;
-          }
-          
-          if (docSnap && docSnap.exists()) {
-            console.log("initAuthListener: Profile found.");
-            const data = docSnap.data();
-            profile = { ...profile, ...data };
+            callback(updatedProfile, user);
           } else {
-            console.log("initAuthListener: No profile found, creating one.");
-            try {
-              await setDoc(docRef, sanitizeForFirestore(profile), { merge: true });
-            } catch (e: any) {
-              console.error("initAuthListener: Create error:", e.code || e.message);
-              if (e.code === 'permission-denied') {
-                handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}`);
-              }
-              // Don't throw here, just continue with the default profile
+            console.log("initAuthListener: No profile found in Firestore, using Auth defaults.");
+            // Create initial profile if it doesn't exist
+            setDoc(docRef, sanitizeForFirestore(profile), { merge: true })
+              .catch(e => console.error("initAuthListener: Error creating initial profile:", e));
+            
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));
+              localStorage.setItem('oneyatra_user', 'true');
             }
+            callback(profile, user);
           }
-        } catch (e: any) {
-          console.warn("initAuthListener: Firestore sync failed, using local fallback:", e.message || e);
-          // Fallback to local storage if available
-          const localData = localStorage.getItem(CURRENT_USER_KEY);
-          if (localData) {
-            try {
-              const parsed = JSON.parse(localData);
-              profile = { ...profile, ...parsed };
-            } catch (err) {}
-          }
-        }
+        }, (error) => {
+          console.error("initAuthListener: Firestore listener error:", error);
+          // Fallback to local storage or auth defaults on error
+          callback(profile, user);
+        });
+      } else {
+        // No DB, just use Auth info
+        callback(profile, user);
       }
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(profile));
-        localStorage.setItem('oneyatra_user', 'true');
-      }
-      callback(profile, user);
     } else {
+      console.log("initAuthListener: No auth user.");
       if (typeof window !== 'undefined') {
         localStorage.removeItem(CURRENT_USER_KEY);
         localStorage.removeItem('oneyatra_user');
@@ -212,6 +203,11 @@ export const initAuthListener = (callback: (user: UserProfile | null, rawUser: U
       callback(null, null);
     }
   });
+
+  return () => {
+    unsubscribeAuth();
+    if (unsubscribeFirestore) unsubscribeFirestore();
+  };
 };
 
 export const validateEmail = (email: string): boolean => {
@@ -288,11 +284,18 @@ export const resendVerificationEmail = async (email: string, password: string): 
 };
 
 export const loginWithGoogle = async (): Promise<{ success: boolean; message?: string }> => {
-  if (!auth || !googleProvider) return { success: false, message: "Firebase Auth not initialized." };
+  console.log("authService: loginWithGoogle called.");
+  if (!auth || !googleProvider) {
+    console.error("authService: loginWithGoogle failed - Auth not initialized.", { auth: !!auth, provider: !!googleProvider });
+    return { success: false, message: "Firebase Auth not initialized." };
+  }
   try {
-    await signInWithPopup(auth, googleProvider);
+    console.log("authService: Initiating signInWithPopup...");
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log("authService: signInWithPopup successful.", { user: result.user.uid });
     return { success: true };
   } catch (error: any) {
+    console.error("authService: loginWithGoogle failed.", error.code, error.message);
     return { success: false, message: handleFirebaseError(error) };
   }
 };
