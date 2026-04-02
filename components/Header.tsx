@@ -7,6 +7,7 @@ import { AppView, UserProfile, SearchParams } from '../types';
 import { NotificationCenter } from './NotificationCenter';
 import { useTheme } from '../hooks/useTheme';
 import { useSettings } from '../contexts/SettingsContext';
+import { useAuth } from '../contexts/AuthContext';
 import { LocationAutocomplete } from './LocationAutocomplete';
 
 interface HeaderProps {
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
   const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, currency, setCurrency, isB2BMode, toggleB2BMode, t, dir } = useSettings();
+  const { user: authUser, isAdmin } = useAuth();
 
   // Quick Edit Form State
   const [origin, setOrigin] = useState('Delhi');
@@ -71,7 +73,8 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
       GROUP_BOOKING: '/group-booking',
       GIFT_CARDS: '/gift-cards',
       PRIVACY: '/privacy',
-      TERMS: '/terms'
+      TERMS: '/terms',
+      ADMIN: '/admin'
     };
     navigate(pathMap[view] || '/');
   };
@@ -161,6 +164,15 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
                 <>
                     <button onClick={() => onNavigate('HOME')} className="text-sm font-medium hover:text-brand-600 transition-colors">{t('nav_plan')}</button>
                     <button onClick={() => onNavigate('MY_TRIPS')} className="text-sm font-medium hover:text-brand-600 transition-colors">{t('nav_trips')}</button>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => navigate('/admin')} 
+                        className="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 px-3 py-1 rounded-lg bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-800"
+                      >
+                        <Server className="h-4 w-4" />
+                        Admin
+                      </button>
+                    )}
                 </>
             )}
           </nav>
@@ -281,6 +293,11 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
               <button onClick={() => {onNavigate('ITINERARY'); setIsMenuOpen(false);}} className="flex items-center gap-2 p-3">
                   <Layout className="h-5 w-5"/> Trip Planner
               </button>
+              {isAdmin && (
+                <button onClick={() => {navigate('/admin'); setIsMenuOpen(false);}} className="flex items-center gap-2 p-3 text-brand-600 font-bold">
+                  <Server className="h-5 w-5"/> Admin Dashboard
+                </button>
+              )}
               <button onClick={onLogout} className="flex items-center gap-2 p-3 text-red-500">
                   <LogOut className="h-5 w-5"/> {t('logout')}
               </button>

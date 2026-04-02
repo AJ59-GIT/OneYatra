@@ -31,16 +31,17 @@ const SCOOTER_RATES: RateCard = { baseFare: 10, perKm: 5, perMin: 0.5, minFare: 
 const AUTO_RATES: RateCard = { baseFare: 30, perKm: 15, perMin: 1.5, minFare: 50, nightSurcharge: 1.25 };
 const E_RICKSHAW_RATES: RateCard = { baseFare: 10, perKm: 5, perMin: 1, minFare: 10, nightSurcharge: 1.1 };
 
-export const getRateCard = (city: string, mode: string = 'CAB'): RateCard => {
+export const getRateCard = (city: string = 'Default', mode: string = 'CAB'): RateCard => {
   if (mode === 'BIKE_TAXI') return BIKE_TAXI_RATES;
   if (mode === 'SCOOTER') return SCOOTER_RATES;
   if (mode === 'AUTO') return AUTO_RATES;
   if (mode === 'E_RICKSHAW') return E_RICKSHAW_RATES;
   
-  // Simple heuristic to match city string
-  if (city.includes('Delhi') || city.includes('Noida') || city.includes('Gurgaon')) return CITY_RATES['Delhi'];
-  if (city.includes('Mumbai') || city.includes('Pune')) return CITY_RATES['Mumbai'];
-  if (city.includes('Bangalore') || city.includes('Bengaluru')) return CITY_RATES['Bangalore'];
+  // Simple heuristic to match city string - Case Insensitive
+  const normalizedCity = (city || 'Default').toLowerCase();
+  if (normalizedCity.includes('delhi') || normalizedCity.includes('noida') || normalizedCity.includes('gurgaon')) return CITY_RATES['Delhi'];
+  if (normalizedCity.includes('mumbai') || normalizedCity.includes('pune')) return CITY_RATES['Mumbai'];
+  if (normalizedCity.includes('bangalore') || normalizedCity.includes('bengaluru')) return CITY_RATES['Bangalore'];
   return CITY_RATES['Default'];
 };
 
@@ -74,6 +75,22 @@ export const calculateCabPrice = (
     const perPersonPrice = distanceKm <= 5 ? 10 : distanceKm <= 12 ? 20 : distanceKm <= 21 ? 30 : distanceKm <= 32 ? 40 : 50;
     const totalMetroPrice = perPersonPrice * passengers;
     return { price: totalMetroPrice, surge: 1, breakdown: `₹${perPersonPrice} per person` };
+  }
+
+  if (mode === 'SUBURBAN_RAIL') {
+    // Indian Railways Suburban/Passenger Fare Simulation (Unreserved)
+    // Extremely affordable fixed distance slabs
+    let perPersonPrice = 5;
+    if (distanceKm > 150) perPersonPrice = 45;
+    else if (distanceKm > 120) perPersonPrice = 40;
+    else if (distanceKm > 100) perPersonPrice = 35;
+    else if (distanceKm > 80) perPersonPrice = 30;
+    else if (distanceKm > 60) perPersonPrice = 25;
+    else if (distanceKm > 40) perPersonPrice = 20;
+    else if (distanceKm > 20) perPersonPrice = 10;
+    
+    const totalSuburbanPrice = perPersonPrice * passengers;
+    return { price: totalSuburbanPrice, surge: 1, breakdown: `₹${perPersonPrice} per person (UTS)` };
   }
 
   const rates = getRateCard(city, mode);

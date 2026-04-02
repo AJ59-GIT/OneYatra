@@ -22,21 +22,34 @@ const withRetry = async <T>(fn: () => Promise<T>, retries = 3, delay = 1000): Pr
 export const fetchTravelOptionsInternal = async (
   params: SearchParams
 ): Promise<RouteResponse> => {
-  const rawApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-  const apiKey = rawApiKey?.trim();
+  let finalRealDistance: number | undefined = params.roadDistance;
+  let finalRealDuration: number | undefined = params.roadDuration;
 
-  // 1. Get Road Distance & Duration (Use provided values or fetch if missing)
-  let realDistance = params.roadDistance;
-  let realDuration = params.roadDuration;
+  try {
+    // 0. Validate Params
+    if (!params || !params.origin || !params.destination) {
+      console.error("Invalid search params received:", params);
+      throw new Error("Origin and destination are required.");
+    }
 
-  if (realDistance === undefined || realDuration === undefined) {
-    console.log(`Fetching road data for ${params.origin} to ${params.destination} (not provided in params)`);
-    const routeData = await getRoadDistance(params.origin, params.destination);
-    realDistance = routeData.distance;
-    realDuration = routeData.duration;
-  }
-  
-  console.log(`Real Road Data for ${params.origin} to ${params.destination}: ${realDistance} km, ${realDuration} mins`);
+    const rawApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    const apiKey = rawApiKey?.trim();
+
+    // 1. Get Road Distance & Duration (Use provided values or fetch if missing)
+    if (finalRealDistance === undefined || finalRealDuration === undefined) {
+      try {
+        console.log(`Fetching road data for ${params.origin} to ${params.destination} (not provided in params)`);
+        const routeData = await getRoadDistance(params.origin, params.destination);
+        finalRealDistance = routeData.distance;
+        finalRealDuration = routeData.duration;
+      } catch (routeError) {
+        console.error("Failed to fetch road distance, using fallback:", routeError);
+        finalRealDistance = 10; // Fallback
+        finalRealDuration = 30; // Fallback
+      }
+    }
+    
+    console.log(`Real Road Data for ${params.origin} to ${params.destination}: ${finalRealDistance} km, ${finalRealDuration} mins`);
 
   const isValidFormat = apiKey && apiKey.startsWith('AIza') && apiKey.length > 20;
 
@@ -47,7 +60,7 @@ export const fetchTravelOptionsInternal = async (
       startsWithAIza: apiKey?.startsWith('AIza'),
       isPlaceholder: apiKey === 'TODO_KEYHERE'
     });
-    return mockTravelData(params, realDistance, realDuration);
+    return mockTravelData(params, finalRealDistance || 10, finalRealDuration || 30);
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -79,23 +92,36 @@ export const fetchTravelOptionsInternal = async (
     Act as a Travel Search Engine. Generate realistic travel options for the following request:
     ${promptContext}
     
-    Actual Road Distance: ${realDistance} km.
+    Actual Road Distance: ${finalRealDistance} km.
     
     Passengers: ${params.passengers} (Prices must be TOTAL for all passengers)
     
-    Filtering Rules based on distance (${realDistance} km):
-    - If distance <= 2 km: Prioritize WALK, BICYCLE, and E-RICKSHAW.
-    - If distance <= 5 km: Include AUTO, METRO, and BIKE_TAXI.
-    - If distance <= 15 km: Include METRO, CAB, and AUTO.
-    - If distance <= 50 km: Include METRO, CAB, and SHARED_CAB.
-    - If distance > 50 km: Include TRAIN, FLIGHT, BUS, and FERRY (if coastal).
+    Filtering Rules based on distance (${finalRealDistance} km):
+    - If distance <= 2 km: Prioritize WALK, BICYCLE (MyByk, Yulu), and E-RICKSHAW.
+    - If distance <= 5 km: Include AUTO (Uber Auto, Ola Auto), METRO (DMRC, MMRDA, BMRCL), and BIKE_TAXI (Rapido, Uber Moto).
+    - If distance <= 15 km: Include METRO, CAB (Uber, Ola, BluSmart), and AUTO.
+    - If distance <= 50 km: Include METRO, CAB, SUBURBAN_RAIL (Mumbai Local, Chennai Suburban), and SHARED_CAB.
+    - If distance > 50 km: Include TRAIN (IRCTC), FLIGHT (IndiGo, Air India), BUS (RedBus, MSRTC, UPSRTC), SUBURBAN_RAIL (for inter-city/state passenger trains), and FERRY (Kochi Water Metro, Mumbai Ferry).
     - HARD RULE: Strictly EXCLUDE FLIGHT if distance is under 80 km.
     
+    MaaS Providers to use (Select realistically):
+    - Cabs/Ride-Hailing: Uber, Ola, Rapido, BluSmart, InDrive, Savaari.
+    - Public Transport: IRCTC (Rail), MSRTC, DTC, BMTC, BEST, KSRTC, UPSRTC.
+    - Metro: DMRC (Delhi), MMRDA/MMOPL (Mumbai), BMRCL (Bangalore), CMRL (Chennai), KMRL (Kochi), HMRL (Hyderabad).
+    - Micro-mobility: Yulu, Bounce, Vogo, MyByk.
+    - Bus Aggregators: RedBus, AbhiBus, ZingBus, IntrCity SmartBus.
+    - Car Rentals: Zoomcar, Revv, Myles, Avis India.
+    - Water: Kochi Water Metro, Mumbai-Mandwa Ferry, Kolkata Ferry.
+
+    Suburban Rail Context:
+    - If origin/destination are in Mumbai, Kolkata, Chennai, or Hyderabad, prioritize 'SUBURBAN_RAIL' (Local Trains).
+    - For Mumbai Local: Mention "Ticket valid for 1 hour for single journey" in features.
+    
     Mood Assignment:
-    - PRODUCTIVE: Flights, AC Trains, Cabs with WiFi.
-    - RELAXED: Sleeper Buses, Rajdhani Trains.
-    - ADVENTUROUS: Bike Taxis, Scooters, Ferries.
-    - ECO_FRIENDLY: Metro, E-Rickshaws, Walking, Cycling.
+    - PRODUCTIVE: Flights, AC Trains, Cabs with WiFi (BluSmart).
+    - RELAXED: Sleeper Buses (ZingBus), Rajdhani Trains.
+    - ADVENTUROUS: Bike Taxis (Rapido), Scooters (Vogo), Ferries, Local Trains (General Class).
+    - ECO_FRIENDLY: Metro, E-Rickshaws, Walking, Cycling (Yulu), Local Trains.
     
     Modes to include: Provide a diverse mix based on the rules above.
     
@@ -106,17 +132,17 @@ export const fetchTravelOptionsInternal = async (
     4. 'price': Total price in INR.
     5. 'tag': 'Cheapest', 'Fastest', 'Best Value', 'Eco-Choice'.
     6. 'mood': Assign one of the moods above.
+    7. 'trustBadges': Add relevant badges (e.g., 'Verified Provider', 'Safe for Women', 'Eco-Friendly').
     
     Provide a short 'aiInsight' comparing the options and mentioning why certain modes are prioritized for this distance.
     Limit the response to a maximum of 4 high-quality options per journey.
   `;
 
-  try {
-    const response = await withRetry(() => ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+  const response = await withRetry(() => ai.models.generateContent({
+    model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        systemInstruction: "You are a world-class travel expert for the Indian market. You provide precise, realistic travel options across Cabs, Bike Taxis, Scooters, Buses, Trains, and Flights. You MUST follow distance-based filtering rules strictly. You understand Indian geography, typical travel times, and pricing nuances. Keep the JSON response concise.",
+        systemInstruction: "You are a world-class travel expert for the Indian market. You provide precise, realistic travel options across Cabs, Bike Taxis, Scooters, Buses, Trains, and Flights. You MUST follow distance-based filtering rules strictly. You understand Indian geography, typical travel times, and pricing nuances. You are aware of all major MaaS providers in India like Uber, Ola, BluSmart, Rapido, IRCTC, RedBus, and various Metro/Local train networks. Keep the JSON response concise.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -132,7 +158,7 @@ export const fetchTravelOptionsInternal = async (
                 type: Type.OBJECT,
                 properties: {
                   id: { type: Type.STRING },
-                  mode: { type: Type.STRING, enum: ['CAB', 'BUS', 'TRAIN', 'FLIGHT', 'MIXED', 'BIKE_TAXI', 'SCOOTER', 'AUTO', 'METRO', 'FERRY', 'SHARED_CAB', 'WALK', 'BICYCLE'] },
+                  mode: { type: Type.STRING, enum: ['CAB', 'BUS', 'TRAIN', 'FLIGHT', 'MIXED', 'BIKE_TAXI', 'SCOOTER', 'AUTO', 'METRO', 'FERRY', 'SHARED_CAB', 'WALK', 'BICYCLE', 'SUBURBAN_RAIL'] },
                   provider: { type: Type.STRING },
                   departureTime: { type: Type.STRING },
                   arrivalTime: { type: Type.STRING },
@@ -147,6 +173,19 @@ export const fetchTravelOptionsInternal = async (
                   features: { type: Type.ARRAY, items: { type: Type.STRING } },
                   tag: { type: Type.STRING, nullable: true },
                   mood: { type: Type.STRING, enum: ['PRODUCTIVE', 'RELAXED', 'ADVENTUROUS', 'ECO_FRIENDLY'] },
+                  trustBadges: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        id: { type: Type.STRING },
+                        label: { type: Type.STRING },
+                        icon: { type: Type.STRING },
+                        description: { type: Type.STRING },
+                        color: { type: Type.STRING }
+                      }
+                    }
+                  },
                   legs: {
                     type: Type.ARRAY,
                     items: {
@@ -176,7 +215,7 @@ export const fetchTravelOptionsInternal = async (
                 type: Type.OBJECT,
                 properties: {
                   id: { type: Type.STRING },
-                  mode: { type: Type.STRING, enum: ['CAB', 'BUS', 'TRAIN', 'FLIGHT', 'MIXED', 'BIKE_TAXI', 'SCOOTER', 'AUTO', 'METRO', 'FERRY', 'SHARED_CAB', 'WALK', 'BICYCLE'] },
+                  mode: { type: Type.STRING, enum: ['CAB', 'BUS', 'TRAIN', 'FLIGHT', 'MIXED', 'BIKE_TAXI', 'SCOOTER', 'AUTO', 'METRO', 'FERRY', 'SHARED_CAB', 'WALK', 'BICYCLE', 'SUBURBAN_RAIL'] },
                   provider: { type: Type.STRING },
                   departureTime: { type: Type.STRING },
                   arrivalTime: { type: Type.STRING },
@@ -191,6 +230,19 @@ export const fetchTravelOptionsInternal = async (
                   features: { type: Type.ARRAY, items: { type: Type.STRING } },
                   tag: { type: Type.STRING, nullable: true },
                   mood: { type: Type.STRING, enum: ['PRODUCTIVE', 'RELAXED', 'ADVENTUROUS', 'ECO_FRIENDLY'] },
+                  trustBadges: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        id: { type: Type.STRING },
+                        label: { type: Type.STRING },
+                        icon: { type: Type.STRING },
+                        description: { type: Type.STRING },
+                        color: { type: Type.STRING }
+                      }
+                    }
+                  },
                   legs: {
                     type: Type.ARRAY,
                     items: {
@@ -227,17 +279,17 @@ export const fetchTravelOptionsInternal = async (
       result = JSON.parse(text) as RouteResponse;
     } catch (parseError) {
       console.error("Failed to parse AI JSON response:", parseError);
-      return mockTravelData(params, realDistance, realDuration);
+      return mockTravelData(params, finalRealDistance || 10, finalRealDuration || 30);
     }
 
     if (result.options && Array.isArray(result.options)) {
-      result.options = result.options.map(opt => processOption(opt, params.origin, params.time, params.destination, realDistance, realDuration, params.passengers));
+      result.options = result.options.map(opt => processOption(opt, params.origin, params.time, params.destination, finalRealDistance || 10, finalRealDuration || 30, params.passengers));
     } else {
       result.options = [];
     }
 
     if (result.returnOptions && Array.isArray(result.returnOptions)) {
-        result.returnOptions = result.returnOptions.map(opt => processOption(opt, params.destination, params.returnTime || '09:00', params.origin, realDistance, realDuration, params.passengers));
+        result.returnOptions = result.returnOptions.map(opt => processOption(opt, params.destination, params.returnTime || '09:00', params.origin, finalRealDistance || 10, finalRealDuration || 30, params.passengers));
     }
 
     return result;
@@ -246,9 +298,18 @@ export const fetchTravelOptionsInternal = async (
     if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota')) {
       console.error("Gemini API Quota Exhausted. Falling back to mock data.");
     } else {
-      console.error("Gemini API Error:", error);
+      console.error("Gemini API Error or Crash:", error);
     }
-    return mockTravelData(params, realDistance, realDuration);
+    // Final fallback - ensure we return SOMETHING if possible
+    try {
+      // Use fallback values if real ones are missing
+      const dist = (typeof finalRealDistance === 'number') ? finalRealDistance : 10;
+      const dur = (typeof finalRealDuration === 'number') ? finalRealDuration : 30;
+      return mockTravelData(params, dist, dur);
+    } catch (mockError) {
+      console.error("Even mock data failed:", mockError);
+      throw error; // Re-throw original if even mock fails
+    }
   }
 };
 
@@ -328,8 +389,8 @@ const processOption = (opt: TravelOption, origin: string, time: string, destinat
     }
   }
 
-  // Price Recalculation for Cabs/Bike Taxis/Scooters/Auto/Metro
-  if (['CAB', 'BIKE_TAXI', 'SCOOTER', 'AUTO', 'METRO', 'WALK', 'BICYCLE'].includes(updatedOpt.mode)) {
+  // Price Recalculation for Cabs/Bike Taxis/Scooters/Auto/Metro/Suburban
+  if (['CAB', 'BIKE_TAXI', 'SCOOTER', 'AUTO', 'METRO', 'WALK', 'BICYCLE', 'SUBURBAN_RAIL'].includes(updatedOpt.mode)) {
     const km = parseDistanceToKm(updatedOpt.distance!);
     const mins = parseDurationToMins(updatedOpt.duration);
     const estimate = calculateCabPrice(km, mins, origin, time, updatedOpt.mode, passengers);
@@ -340,6 +401,29 @@ const processOption = (opt: TravelOption, origin: string, time: string, destinat
       surgeMultiplier: estimate.surge,
       features: [...(opt.features || []), estimate.surge > 1 ? `Surge ${estimate.surge}x` : 'Standard Rate']
     };
+  }
+
+  // Provider override for Suburban Rail
+  if (updatedOpt.mode === 'SUBURBAN_RAIL') {
+    updatedOpt.provider = 'UTS (Indian Railways)';
+    if (!updatedOpt.features.includes('Unreserved')) updatedOpt.features.push('Unreserved');
+    if (!updatedOpt.features.includes('UTS Booking')) updatedOpt.features.push('UTS Booking');
+    
+    // Add Mumbai Local specific rule
+    if (origin.toLowerCase().includes('mumbai') || destination.toLowerCase().includes('mumbai')) {
+      if (!updatedOpt.features.includes('Ticket valid for 1h')) {
+        updatedOpt.features.push('Ticket valid for 1h');
+      }
+    }
+  }
+
+  // Add last-mile suggestions for long-distance modes
+  if (['TRAIN', 'FLIGHT', 'BUS'].includes(updatedOpt.mode) && !updatedOpt.legs) {
+    const lastMileProviders = ['Uber', 'Ola', 'BluSmart', 'Rapido'];
+    const randomProvider = lastMileProviders[Math.floor(Math.random() * lastMileProviders.length)];
+    if (!updatedOpt.features.some(f => f.includes('Last-mile'))) {
+      updatedOpt.features.push(`Last-mile: ${randomProvider} available`);
+    }
   }
 
   const linkData = generateDeepLink(updatedOpt.provider, updatedOpt.mode, origin, destination);
@@ -353,7 +437,7 @@ const processOption = (opt: TravelOption, origin: string, time: string, destinat
     const mins = Math.floor(Math.random() * 10) + 2;
     const label = updatedOpt.mode === 'CAB' ? 'Driver' : updatedOpt.mode === 'AUTO' ? 'Auto' : 'Rider';
     updatedOpt.realTimeStatus = `${label} arriving in ${mins} mins`;
-  } else if (updatedOpt.mode === 'BUS' || updatedOpt.mode === 'METRO') {
+  } else if (updatedOpt.mode === 'BUS' || updatedOpt.mode === 'METRO' || updatedOpt.mode === 'SUBURBAN_RAIL') {
     const status = Math.random() > 0.5 ? 'On Time' : '5 mins delayed';
     updatedOpt.realTimeStatus = `Live: ${status}`;
   } else if (updatedOpt.mode === 'TRAIN') {
@@ -371,69 +455,83 @@ const mockTravelData = (params: SearchParams, realDistance: number, realDuration
       {
         id: "s1", mode: "SCOOTER", provider: "Vogo", departureTime: "Flexible", arrivalTime: "Flexible",
         duration: `${Math.round(realDuration * 0.9)}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
-        rating: 4.2, features: ["Self-drive", "Electric"], tag: "Eco-Choice", carbonEmission: "0 kg", ecoScore: 95
+        rating: 4.2, features: ["Self-drive", "Electric"], tag: "Eco-Choice", carbonEmission: "0 kg", ecoScore: 95,
+        mood: "ECO_FRIENDLY", trustBadges: [{ id: "tb1", label: "Eco-Friendly", icon: "Leaf", description: "Zero emissions", color: "green" }]
       },
       {
         id: "c1", mode: "CAB", provider: "Uber Go", departureTime: "Flexible", arrivalTime: "Flexible",
         duration: `${realDuration}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
-        rating: 4.5, features: ["AC", "Door-to-door"], tag: "Fastest", carbonEmission: "0.5 kg", ecoScore: 40
+        rating: 4.5, features: ["AC", "Door-to-door"], tag: "Fastest", carbonEmission: "0.5 kg", ecoScore: 40,
+        mood: "PRODUCTIVE", trustBadges: [{ id: "tb2", label: "Verified", icon: "ShieldCheck", description: "Top rated driver", color: "blue" }]
+      },
+      {
+        id: "a1", mode: "AUTO", provider: "Ola Auto", departureTime: "Flexible", arrivalTime: "Flexible",
+        duration: `${realDuration}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
+        rating: 4.3, features: ["Open-air", "Economical"], tag: "Best Value", carbonEmission: "0.3 kg", ecoScore: 55,
+        mood: "ADVENTUROUS"
+      },
+      {
+        id: "bt0", mode: "BIKE_TAXI", provider: "Rapido", departureTime: "Flexible", arrivalTime: "Flexible",
+        duration: `${Math.round(realDuration * 0.8)}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
+        rating: 4.4, features: ["Fast", "Helmet provided"], tag: "Cheapest", carbonEmission: "0.2 kg", ecoScore: 65,
+        mood: "ADVENTUROUS"
       }
     ];
-  } else if (realDistance <= 8) {
+  } else if (realDistance <= 10) {
     options = [
       {
         id: "bt1", mode: "BIKE_TAXI", provider: "Rapido", departureTime: "Flexible", arrivalTime: "Flexible",
         duration: `${Math.round(realDuration * 0.8)}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
-        rating: 4.6, features: ["Helmet provided", "Fast"], tag: "Best Value", carbonEmission: "0.2 kg", ecoScore: 60
+        rating: 4.6, features: ["Helmet provided", "Fast"], tag: "Best Value", carbonEmission: "0.2 kg", ecoScore: 60,
+        mood: "ADVENTUROUS"
       },
       {
-        id: "c2", mode: "CAB", provider: "Ola Mini", departureTime: "Flexible", arrivalTime: "Flexible",
+        id: "m1", mode: "METRO", provider: "DMRC", departureTime: "Every 5 mins", arrivalTime: "Flexible",
+        duration: `${Math.round(realDuration * 0.7)}m`, distance: `${realDistance} km`, price: 40, currency: "INR",
+        rating: 4.7, features: ["AC", "No Traffic"], tag: "Fastest", carbonEmission: "0.1 kg", ecoScore: 90,
+        mood: "ECO_FRIENDLY"
+      },
+      {
+        id: "c2", mode: "CAB", provider: "BluSmart", departureTime: "Flexible", arrivalTime: "Flexible",
         duration: `${realDuration}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
-        rating: 4.3, features: ["AC", "Comfort"], tag: "Fastest", carbonEmission: "1.2 kg", ecoScore: 35
+        rating: 4.9, features: ["Electric", "No Cancellations"], tag: "Best Value", carbonEmission: "0 kg", ecoScore: 95,
+        mood: "PRODUCTIVE"
       }
     ];
-  } else if (realDistance <= 25) {
+  } else if (realDistance <= 50) {
     options = [
       {
         id: "c3", mode: "CAB", provider: "Uber Premier", departureTime: "Flexible", arrivalTime: "Flexible",
         duration: `${realDuration}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
-        rating: 4.8, features: ["Top-rated drivers", "Sedan"], tag: "Best Value", carbonEmission: "3.5 kg", ecoScore: 30
+        rating: 4.8, features: ["Top-rated drivers", "Sedan"], tag: "Best Value", carbonEmission: "3.5 kg", ecoScore: 30,
+        mood: "PRODUCTIVE"
       },
       {
-        id: "bt2", mode: "BIKE_TAXI", provider: "Uber Moto", departureTime: "Flexible", arrivalTime: "Flexible",
-        duration: `${Math.round(realDuration * 0.8)}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
-        rating: 4.4, features: ["Quick", "Affordable"], tag: "Cheapest", carbonEmission: "0.8 kg", ecoScore: 55
-      }
-    ];
-  } else if (realDistance <= 80) {
-    options = [
-      {
-        id: "b1", mode: "BUS", provider: "UPSRTC", departureTime: "08:00 AM", arrivalTime: "10:00 AM",
-        duration: `${Math.round(realDuration * 1.5)}m`, distance: `${realDistance} km`, price: 150 * params.passengers, currency: "INR",
-        rating: 3.8, features: ["Non-AC", "Regular"], tag: "Cheapest", carbonEmission: "5 kg", ecoScore: 75
-      },
-      {
-        id: "c4", mode: "CAB", provider: "Ola Intercity", departureTime: "Flexible", arrivalTime: "Flexible",
-        duration: `${realDuration}m`, distance: `${realDistance} km`, price: 0, currency: "INR",
-        rating: 4.6, features: ["AC", "Private"], tag: "Fastest", carbonEmission: "15 kg", ecoScore: 25
+        id: "sr1", mode: "SUBURBAN_RAIL", provider: "Mumbai Local", departureTime: "Every 10 mins", arrivalTime: "Flexible",
+        duration: `${Math.round(realDuration * 0.8)}m`, distance: `${realDistance} km`, price: 15, currency: "INR",
+        rating: 4.1, features: ["Fast Train", "Ticket valid for 1h"], tag: "Cheapest", carbonEmission: "0.5 kg", ecoScore: 85,
+        mood: "ADVENTUROUS"
       }
     ];
   } else {
     options = [
       {
-        id: "f1", mode: "FLIGHT", provider: "Air India", departureTime: "11:00 AM", arrivalTime: "12:30 PM",
+        id: "f1", mode: "FLIGHT", provider: "IndiGo", departureTime: "11:00 AM", arrivalTime: "12:30 PM",
         duration: "1h 30m", distance: "800 km", price: 5500 * params.passengers, currency: "INR",
-        rating: 4.2, features: ["Full Service", "Meals"], tag: "Fastest", carbonEmission: "120 kg", ecoScore: 20
+        rating: 4.2, features: ["On-time", "Last-mile: Uber available"], tag: "Fastest", carbonEmission: "120 kg", ecoScore: 20,
+        mood: "PRODUCTIVE"
       },
       {
-        id: "t1", mode: "TRAIN", provider: "Rajdhani Express", departureTime: "08:00 PM", arrivalTime: "06:00 AM",
-        duration: "10h 00m", distance: "800 km", price: 2800 * params.passengers, currency: "INR",
-        rating: 4.9, features: ["AC 2-Tier", "Bedding"], tag: "Best Value", carbonEmission: "12 kg", ecoScore: 90
+        id: "t1", mode: "TRAIN", provider: "IRCTC (Vande Bharat)", departureTime: "08:00 AM", arrivalTime: "02:00 PM",
+        duration: "6h 00m", distance: "500 km", price: 1800 * params.passengers, currency: "INR",
+        rating: 4.9, features: ["AC Chair Car", "Meals included"], tag: "Best Value", carbonEmission: "8 kg", ecoScore: 92,
+        mood: "PRODUCTIVE"
       },
       {
-        id: "b2", mode: "BUS", provider: "RedBus", departureTime: "09:00 PM", arrivalTime: "08:00 AM",
+        id: "b2", mode: "BUS", provider: "IntrCity SmartBus", departureTime: "09:00 PM", arrivalTime: "08:00 AM",
         duration: "11h 00m", distance: "800 km", price: 1200 * params.passengers, currency: "INR",
-        rating: 4.1, features: ["AC Sleeper", "WiFi"], tag: "Cheapest", carbonEmission: "20 kg", ecoScore: 70
+        rating: 4.4, features: ["AC Sleeper", "Washroom", "WiFi"], tag: "Cheapest", carbonEmission: "20 kg", ecoScore: 70,
+        mood: "RELAXED"
       }
     ];
   }

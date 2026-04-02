@@ -1,0 +1,44 @@
+{
+  "common": {
+    "home": "Home",
+    "booking": "Bookings",
+    "vault": "Vault",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login with Google",
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "language": "Language"
+  },
+  "home": {
+    "welcome": "Welcome to OneYatra",
+    "tagline": "Your all-in-one travel companion",
+    "features": {
+      "booking": "Smart Booking",
+      "vault": "Secure Vault",
+      "ocr": "Auto-fill Documents",
+      "offline": "Offline Access"
+    }
+  },
+  "vault": {
+    "title": "Secure Document Vault",
+    "upload": "Upload Document",
+    "scan": "Scan Document",
+    "no_docs": "No documents found. Upload your first document!",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "expiry": "Expiry Date"
+  },
+  "booking": {
+    "title": "Book Your Journey",
+    "fill_vault": "Fill from Vault",
+    "passenger_details": "Passenger Details",
+    "payment": "Proceed to Payment"
+  }
+}

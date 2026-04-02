@@ -123,7 +123,7 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
             </div>
         </div>
 
-        <Button onClick={onComplete} className="w-full py-4 text-lg shadow-lg shadow-brand-500/20">Go to My Trips</Button>
+        <Button onClick={onComplete} className="w-full py-4 text-lg shadow-lg shadow-brand-500/20">View Full Confirmation</Button>
       </div>
     );
   }

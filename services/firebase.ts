@@ -37,7 +37,9 @@ const firebaseConfig = {
   storageBucket: rawConfig.storageBucket || getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
   messagingSenderId: rawConfig.messagingSenderId || getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
   appId: rawConfig.appId || getEnv('VITE_FIREBASE_APP_ID'),
-  measurementId: rawConfig.measurementId || getEnv('VITE_FIREBASE_MEASUREMENT_ID'),
+  measurementId: (rawConfig.measurementId === 'G-NVWX892HTY' || getEnv('VITE_FIREBASE_MEASUREMENT_ID') === 'G-NVWX892HTY') 
+    ? 'G-0X12903F3Q' 
+    : (rawConfig.measurementId || getEnv('VITE_FIREBASE_MEASUREMENT_ID')),
 };
 
 const isConfigValid = (config: any) => {

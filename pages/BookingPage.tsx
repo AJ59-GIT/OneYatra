@@ -12,10 +12,8 @@ import { checkPolicyCompliance, submitForApproval } from '../services/corporateS
 import { validateGiftCard, redeemGiftCard } from '../services/giftCardService';
 import { getDocuments } from '../services/documentService'; 
 import { validateIdNumber, IdDocType } from '../utils/idValidation';
-import { BookingReview } from '../components/booking/BookingReview';
-import { BookingSeatSelection } from '../components/booking/BookingSeatSelection';
-import { BookingMealSelection } from '../components/booking/BookingMealSelection';
-import { BookingSpecialRequests } from '../components/booking/BookingSpecialRequests';
+import { BookingDetails } from '../components/booking/BookingDetails';
+import { BookingPassengerInfo } from '../components/booking/BookingPassengerInfo';
 import { BookingPayment } from '../components/booking/BookingPayment';
 import { BookingStatus } from '../components/booking/BookingStatus';
 
@@ -25,10 +23,10 @@ interface BookingPageProps {
   destination: string;
   passengersCount: number;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (bookingId?: string) => void;
 }
 
-type Step = 'REVIEW' | 'SEAT_SELECTION' | 'MEAL_SELECTION' | 'SPECIAL_REQUESTS' | 'PAYMENT' | 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'PENDING_APPROVAL';
+type Step = 'DETAILS' | 'PASSENGER_INFO' | 'PAYMENT' | 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'PENDING_APPROVAL';
 type PaymentMethod = 'UPI' | 'CARD' | 'WALLET' | 'NETBANKING' | 'PAYLATER' | 'CORPORATE_BILL';
 
 const PROMO_CODES: Record<string, { type: 'FLAT' | 'PERCENT', value: number, minAmount: number, maxDiscount?: number }> = {
@@ -41,7 +39,7 @@ const PROMO_CODES: Record<string, { type: 'FLAT' | 'PERCENT', value: number, min
 export const BookingPage = ({ option, origin, destination, passengersCount, onBack, onComplete }: BookingPageProps) => {
   // ... existing state and logic ...
   const { isB2BMode } = useSettings();
-  const [step, setStep] = useState<Step>('REVIEW');
+  const [step, setStep] = useState<Step>('DETAILS');
   const [booking, setBooking] = useState<Booking | null>(null);
   const [processingStatus, setProcessingStatus] = useState('');
   
@@ -59,14 +57,14 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
   const [seatCost, setSeatCost] = useState(0);
   
-  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
-  const [mealSpecialRequest, setMealSpecialRequest] = useState('');
-  const [mealCost, setMealCost] = useState(0);
-
-  // Special Request State
-  const [selectedRequests, setSelectedRequests] = useState<SpecialRequestOption[]>([]);
-  const [specialRequestNotes, setSpecialRequestNotes] = useState('');
-  const [specialRequestCost, setSpecialRequestCost] = useState(0);
+  // Re-adding as state to ensure they are available in all handlers
+  const [mealCost] = useState(0);
+  const [insuranceCost] = useState(0);
+  const [specialRequestCost] = useState(0);
+  const [hasInsurance] = useState(false);
+  const [selectedMeal] = useState(null);
+  const [specialRequestNotes] = useState('');
+  const [selectedRequests] = useState<SpecialRequestOption[]>([]);
 
   // Cancellation Policy State
   const [isPolicyExpanded, setIsPolicyExpanded] = useState(false);
@@ -244,49 +242,51 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
   };
 
   // ... (Handlers) ...
-  const handleSeatsConfirmed = (seats: any[]) => {
+  const handleDetailsProceed = (seats: any[]) => {
     setSelectedSeats(seats);
     const extra = seats.reduce((sum, s) => sum + s.price, 0);
     setSeatCost(extra);
-    setStep('MEAL_SELECTION');
+    setStep('PASSENGER_INFO');
   };
 
-  const handleSeatsSkipped = () => {
-    setSeatCost(0);
-    setSelectedSeats([]);
-    setStep('MEAL_SELECTION');
-  };
+  const handlePassengerInfoProceed = () => {
+    const newErrors: Record<string, string> = {};
+    passengers.forEach((p, i) => {
+      if (!p.name) newErrors[`name_${i}`] = 'Name is required';
+      const ageNum = Number(p.age);
+      if (!p.age || isNaN(ageNum) || ageNum <= 0 || ageNum > 120) {
+        newErrors[`age_${i}`] = 'Valid age required (1-120)';
+      }
+      if (!p.gender) newErrors[`gender_${i}`] = 'Gender is required';
+      
+      if ((option.mode === 'FLIGHT' || option.mode === 'TRAIN' || option.mode === 'BUS')) {
+        if (!p.idType) newErrors[`idType_${i}`] = 'ID type required';
+        if (!p.idNumber) newErrors[`idNumber_${i}`] = 'ID number required';
+        else {
+          const v = validateIdNumber(p.idType as IdDocType, p.idNumber);
+          if (!v.isValid) newErrors[`idNumber_${i}`] = v.error || 'Invalid format';
+        }
+      }
+    });
 
-  const handleMealConfirmed = (meal: Meal | null, specialRequests: string) => {
-    setSelectedMeal(meal);
-    const cost = meal ? meal.price * passengersCount : 0;
-    setMealCost(cost);
-    setStep('SPECIAL_REQUESTS');
-  };
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      const firstError = Object.keys(newErrors)[0];
+      const index = parseInt(firstError.split('_')[1]);
+      setExpandedIndex(index);
+      return;
+    }
 
-  const handleSpecialRequestsConfirmed = (requests: SpecialRequestOption[], notes: string) => {
-    setSelectedRequests(requests);
-    setSpecialRequestNotes(notes);
-    const cost = requests.reduce((sum, req) => sum + req.price, 0);
-    setSpecialRequestCost(cost);
-    handleStartPayment(seatCost + mealCost + cost);
+    setErrors({});
+    handleStartPayment(seatCost);
   };
 
   const handleStartPayment = (totalExtras = 0) => {
-    const currentExtras = seatCost + mealCost + specialRequestCost;
-    const finalExtras = totalExtras || currentExtras;
-    const finalPrice = option.price + finalExtras;
+    const finalPrice = option.price + totalExtras;
     
     const newBooking = createBooking({ ...option, price: finalPrice }, passengers);
     newBooking.selectedSeats = selectedSeats;
-    newBooking.selectedMeal = selectedMeal;
     
-    let combinedNotes = specialRequestNotes;
-    if (mealSpecialRequest) {
-        combinedNotes = combinedNotes ? `Meal: ${mealSpecialRequest}. ${combinedNotes}` : `Meal: ${mealSpecialRequest}`;
-    }
-    newBooking.specialRequests = combinedNotes;
-    newBooking.selectedAddOns = selectedRequests;
     newBooking.origin = origin;
     newBooking.destination = destination;
     newBooking.isCorporate = isB2BMode;
@@ -422,7 +422,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
 
   const handlePay = async () => {
     if (!booking) return;
-    const subTotal = option.price + seatCost + mealCost + specialRequestCost;
+    const subTotal = option.price + seatCost + mealCost + specialRequestCost + insuranceCost;
     const discountAmount = appliedDiscount ? appliedDiscount.amount : 0;
     let paymentFee = 0;
     if (paymentMethod === 'NETBANKING') paymentFee = 20;
@@ -529,39 +529,6 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
 
   const inputClasses = "col-span-1 border border-gray-300 dark:border-slate-600 rounded-lg p-3 text-xs bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors";
 
-  const handleProceedFromReview = () => {
-    const newErrors: Record<string, string> = {};
-    passengers.forEach((p, i) => {
-      if (!p.name) newErrors[`name_${i}`] = 'Name is required';
-      const ageNum = Number(p.age);
-      if (!p.age || isNaN(ageNum) || ageNum <= 0 || ageNum > 120) {
-        newErrors[`age_${i}`] = 'Valid age required (1-120)';
-      }
-      if (!p.gender) newErrors[`gender_${i}`] = 'Gender is required';
-      
-      if ((option.mode === 'FLIGHT' || option.mode === 'TRAIN' || option.mode === 'BUS')) {
-        if (!p.idType) newErrors[`idType_${i}`] = 'ID type required';
-        if (!p.idNumber) newErrors[`idNumber_${i}`] = 'ID number required';
-        else {
-          const v = validateIdNumber(p.idType as IdDocType, p.idNumber);
-          if (!v.isValid) newErrors[`idNumber_${i}`] = v.error || 'Invalid format';
-        }
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      const firstError = Object.keys(newErrors)[0];
-      const index = parseInt(firstError.split('_')[1]);
-      setExpandedIndex(index);
-      return;
-    }
-
-    setErrors({});
-    if (option.mode === 'CAB') setStep('SPECIAL_REQUESTS');
-    else setStep('SEAT_SELECTION');
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {step !== 'CONFIRMED' && step !== 'FAILED' && step !== 'PENDING_APPROVAL' && (
@@ -573,11 +540,20 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
         </button>
       )}
 
-      {step === 'REVIEW' && (
-        <BookingReview 
+      {step === 'DETAILS' && (
+        <BookingDetails 
           option={option}
           origin={origin}
           destination={destination}
+          passengersCount={passengersCount}
+          onProceed={handleDetailsProceed}
+          onBack={onBack}
+        />
+      )}
+
+      {step === 'PASSENGER_INFO' && (
+        <BookingPassengerInfo 
+          option={option}
           passengersCount={passengersCount}
           passengers={passengers}
           expandedIndex={expandedIndex}
@@ -587,39 +563,10 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
           vaultDocs={vaultDocs}
           activeVaultIndex={activeVaultIndex}
           setActiveVaultIndex={setActiveVaultIndex}
-          isPolicyExpanded={isPolicyExpanded}
-          setIsPolicyExpanded={setIsPolicyExpanded}
           updatePassenger={updatePassenger}
           fillFromVault={fillFromVault}
-          getCancellationPolicy={getCancellationPolicy}
-          onProceed={handleProceedFromReview}
-        />
-      )}
-
-      {step === 'SEAT_SELECTION' && (
-        <BookingSeatSelection 
-          mode={option.mode}
-          passengersCount={passengersCount}
-          onConfirmed={handleSeatsConfirmed}
-          onSkipped={handleSeatsSkipped}
-          basePrice={option.price}
-        />
-      )}
-
-      {step === 'MEAL_SELECTION' && (
-        <BookingMealSelection 
-          passengers={passengers}
-          onConfirmed={handleMealConfirmed}
-          onSkipped={() => setStep('SPECIAL_REQUESTS')}
-          currency={option.currency}
-        />
-      )}
-
-      {step === 'SPECIAL_REQUESTS' && (
-        <BookingSpecialRequests 
-          mode={option.mode}
-          onConfirmed={handleSpecialRequestsConfirmed}
-          onSkipped={() => setStep('PAYMENT')}
+          onProceed={handlePassengerInfoProceed}
+          onBack={() => setStep('DETAILS')}
         />
       )}
 
@@ -668,7 +615,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
           onRemoveGiftCard={handleRemoveGiftCard}
           onDeleteSavedCard={handleDeleteSavedCard}
           onPay={handlePay}
-          subTotal={option.price + seatCost + mealCost + specialRequestCost}
+          subTotal={option.price + seatCost + mealCost + specialRequestCost + insuranceCost}
           seatCost={seatCost}
           mealCost={mealCost}
           specialRequestCost={specialRequestCost}
@@ -680,7 +627,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
           step={step as any}
           booking={booking}
           processingStatus={processingStatus}
-          onComplete={onComplete}
+          onComplete={() => onComplete(booking?.id)}
         />
       )}
     </div>

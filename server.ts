@@ -1,6 +1,12 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import crypto from "crypto";
 import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
+import session from "express-session";
+import cookieParser from "cookie-parser";
 import { createServer as createViteServer } from "vite";
 import { fetchTravelOptionsInternal, chatWithAIInternal } from "./services/aiProvider.ts";
 import { getGeminiSuggestions } from "./services/locationService.ts";
@@ -21,7 +27,94 @@ async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
+  // Trust proxy is required for express-rate-limit and secure cookies to work behind a proxy
+  app.set('trust proxy', 1);
+
+  // 1. Security Headers with Helmet
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Allow external scripts/styles for now
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: false,
+      frameguard: false, // Allow iframes
+    })
+  );
+
+  // 2. Rate Limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 1000, // High limit for development
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    skip: (req) => process.env.NODE_ENV !== 'production' // Skip in dev
+  });
+  app.use("/api/", limiter);
+
   app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // 3. CORS Configuration
+  app.use(cors({
+    origin: true, // Reflect request origin
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
+  }));
+
+  // Middleware to ensure CHIPS (Partitioned cookies) for iframe compatibility
+  app.use((req, res, next) => {
+    const originalSetHeader = res.setHeader;
+    res.setHeader = function(name: string, value: any): any {
+      if (name.toLowerCase() === 'set-cookie') {
+        const addAttributes = (cookieStr: string) => {
+          let newVal = cookieStr;
+          // In an iframe, SameSite=None and Secure are mandatory
+          if (!newVal.toLowerCase().includes('samesite=')) {
+            newVal += '; SameSite=None';
+          } else if (newVal.toLowerCase().includes('samesite=lax') || newVal.toLowerCase().includes('samesite=strict')) {
+            newVal = newVal.replace(/SameSite=(Lax|Strict)/i, 'SameSite=None');
+          }
+          
+          if (!newVal.toLowerCase().includes('secure')) {
+            newVal += '; Secure';
+          }
+          
+          // Add Partitioned (CHIPS) for better cross-site cookie support
+          if (!newVal.toLowerCase().includes('partitioned')) {
+            newVal += '; Partitioned';
+          }
+          return newVal;
+        };
+
+        if (Array.isArray(value)) {
+          value = value.map(v => typeof v === 'string' ? addAttributes(v) : v);
+        } else if (typeof value === 'string') {
+          value = addAttributes(value);
+        }
+      }
+      return originalSetHeader.call(this, name, value);
+    };
+    next();
+  });
+  
+  app.use(cookieParser(process.env.SESSION_SECRET || 'oneyatra-secret-key'));
+
+  // Use express-session instead of cookie-session for better reliability in iframes
+  app.use(session({
+    name: 'oneyatra.sid',
+    secret: process.env.SESSION_SECRET || 'oneyatra-secret-key',
+    resave: false,
+    saveUninitialized: true,
+    proxy: true, // Required for secure cookies behind a proxy
+    cookie: {
+      secure: true,
+      httpOnly: true,
+      sameSite: 'none',
+      // @ts-ignore
+      partitioned: true,
+      maxAge: 24 * 60 * 60 * 1000
+    }
+  }));
 
   // API routes
   app.get("/api/locations", async (req, res) => {
@@ -134,17 +227,29 @@ async function startServer() {
 
   app.post("/api/travel", async (req, res) => {
     try {
+      console.log(`[API] Processing travel request from ${req.ip} for ${req.body?.origin} to ${req.body?.destination}`);
+      console.log(`[API] Session ID: ${req.sessionID} - Body: ${JSON.stringify(req.body)}`);
+      
+      if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ error: "Empty request body" });
+      }
+
       const results = await fetchTravelOptionsInternal(req.body);
       res.json(results);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Server /api/travel Error:", error);
-      res.status(500).json({ error: "Failed to fetch travel options" });
+      console.error("Stack Trace:", error.stack);
+      res.status(500).json({ 
+        error: "Failed to fetch travel options",
+        details: error.message || "Unknown server error"
+      });
     }
   });
 
   app.post("/api/chat", async (req, res) => {
     try {
       const { message, history } = req.body;
+      console.log(`[API] Processing chat request. Session ID: ${req.sessionID}`);
       const response = await chatWithAIInternal(message, history);
       res.json({ response });
     } catch (error) {
@@ -156,7 +261,13 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        allowedHosts: true, // Allow all hosts in Vite 6
+        fs: {
+          strict: false // Allow serving files from anywhere in the project
+        }
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);

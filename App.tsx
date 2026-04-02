@@ -2,11 +2,13 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from './components/Header';
+import { Button } from './components/Button';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import CompleteProfilePage from './pages/CompleteProfilePage';
 import { SMSNotification } from './components/SMSNotification';
 import { BottomNavigation } from './components/BottomNavigation';
+import { Footer } from './components/Footer';
 import { SearchParams, AppView, TravelOption, TripSegment, Booking } from './types';
 import { requestPushPermission } from './services/notificationService';
 import { logoutUser, initAuthListener } from './services/authService';
@@ -17,9 +19,11 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { OfflineBanner } from './components/OfflineBanner';
 import { CookieConsent } from './components/CookieConsent';
 import { SOSButton } from './components/SOSButton';
-import { Loader2 } from 'lucide-react';
+import { Loader2, XCircle } from 'lucide-react';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AnimatePresence } from 'motion/react';
+import { PageTransition } from './components/PageTransition';
 
 // Lazy Load Pages
 const ResultsPage = lazy(() => import('./pages/ResultsPage'));
@@ -42,6 +46,17 @@ const RoutePlannerPage = lazy(() => import('./pages/RoutePlannerPage'));
 const LocationSearchPage = lazy(() => import('./pages/LocationSearchPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+const CancellationPortal = lazy(() => import('./pages/CancellationPortal'));
+const ReferAndEarnPage = lazy(() => import('./pages/ReferAndEarnPage'));
+const AboutUsPage = lazy(() => import('./pages/AboutUsPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
+const ReviewSubmissionPage = lazy(() => import('./pages/ReviewSubmissionPage'));
+const VendorOnboardingPage = lazy(() => import('./pages/VendorOnboardingPage'));
+const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
+const TravelRulesPage = lazy(() => import('./pages/TravelRulesPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+import { AdminRoute } from './components/AdminRoute';
 
 const PageLoader = () => (
   <div className="flex h-[60vh] items-center justify-center">
@@ -52,7 +67,7 @@ const PageLoader = () => (
 const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn, loading, isAuthReady, user, logout } = useAuth();
+  const { isLoggedIn, loading, isAuthReady, user, logout, firebaseUser } = useAuth();
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
   const [selectedOption, setSelectedOption] = useState<TravelOption | null>(null);
   const [bookingContext, setBookingContext] = useState<{origin: string, destination: string} | null>(null);
@@ -149,6 +164,23 @@ const AppContent = () => {
   };
 
   const handleBackToHome = () => navigate('/');
+  
+  if (isAuthReady && firebaseUser && user?.isActive === false) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6 text-center transition-colors">
+        <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-2xl rounded-3xl">
+          <XCircle className="h-16 w-16 text-red-600 dark:text-red-500 mx-auto mb-6" />
+          <h1 className="text-2xl font-serif italic font-bold mb-4 text-slate-900 dark:text-slate-100">Account Deactivated</h1>
+          <p className="text-sm font-mono opacity-70 mb-8 uppercase tracking-tight text-slate-600 dark:text-slate-400">
+            Your access to the OneYatra platform has been suspended by the system administrator.
+          </p>
+          <Button onClick={handleLogout} className="w-full border-slate-900 dark:border-slate-700">
+            LOGOUT_FROM_SYSTEM
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const currentView = location.pathname.substring(1).toUpperCase().replace(/-/g, '_') || 'HOME';
 
@@ -167,50 +199,75 @@ const AppContent = () => {
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
-              
-              {/* Protected Routes */}
-              <Route path="/" element={isLoggedIn ? <HomePage onSearch={handleSearch} /> : <Navigate to="/login" />} />
-              <Route path="/results" element={isLoggedIn && searchParams ? <ResultsPage searchParams={searchParams} onBack={handleBackToHome} onBookOption={handleInitiateBooking} /> : <Navigate to="/" />} />
-              <Route path="/booking" element={isLoggedIn && selectedOption ? (
-                <BookingPage 
-                  option={selectedOption}
-                  origin={bookingContext?.origin || ''}
-                  destination={bookingContext?.destination || ''}
-                  passengersCount={searchParams?.passengers || 1}
-                  onBack={() => navigate('/results')}
-                  onComplete={() => navigate('/my-trips')}
-                />
-              ) : <Navigate to="/" />} />
-              
-              <Route path="/saved-trips" element={isLoggedIn ? <SavedTripsPage onBack={handleBackToHome} onBookOption={handleInitiateBooking} /> : <Navigate to="/login" />} />
-              <Route path="/my-trips" element={isLoggedIn ? <MyTripsPage onBack={handleBackToHome} onBookAgain={handleBookAgain} /> : <Navigate to="/login" />} />
-              <Route path="/wallet" element={isLoggedIn ? <WalletPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/profile" element={isLoggedIn ? <ProfilePage onBack={handleBackToHome} onLogout={handleLogout} /> : <Navigate to="/login" />} />
-              <Route path="/loyalty" element={isLoggedIn ? <LoyaltyPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/support" element={isLoggedIn ? <SupportPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/alerts" element={isLoggedIn ? <AlertsPage /> : <Navigate to="/login" />} />
-              <Route path="/architecture" element={isLoggedIn ? <ArchitecturePage /> : <Navigate to="/login" />} />
-              <Route path="/impact" element={isLoggedIn ? <ImpactDashboardPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/documents" element={isLoggedIn ? <DocumentsVaultPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/itinerary" element={isLoggedIn ? <ItineraryBuilderPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/corporate" element={isLoggedIn ? <CorporateDashboardPage /> : <Navigate to="/login" />} />
-              <Route path="/group-booking" element={isLoggedIn ? <GroupBookingPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/gift-cards" element={isLoggedIn ? <GiftCardsPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/route-planner" element={isLoggedIn ? <RoutePlannerPage /> : <Navigate to="/login" />} />
-              <Route path="/location-search" element={isLoggedIn ? <LocationSearchPage /> : <Navigate to="/login" />} />
-              <Route path="/complete-profile" element={isLoggedIn ? <CompleteProfilePage /> : <Navigate to="/login" />} />
-              <Route path="/privacy" element={isLoggedIn ? <PrivacyPolicyPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              <Route path="/terms" element={isLoggedIn ? <TermsPage onBack={handleBackToHome} /> : <Navigate to="/login" />} />
-              
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
+            <AnimatePresence mode="wait">
+              <Routes location={location} key={location.pathname}>
+                <Route path="/login" element={<PageTransition><LoginPage onLoginSuccess={handleLoginSuccess} /></PageTransition>} />
+                
+                {/* Protected Routes */}
+                <Route path="/" element={isLoggedIn ? <PageTransition><HomePage onSearch={handleSearch} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/results" element={isLoggedIn && searchParams ? (
+                  <PageTransition>
+                    <ResultsPage searchParams={searchParams} onBack={handleBackToHome} onBookOption={handleInitiateBooking} />
+                  </PageTransition>
+                ) : <Navigate to="/" />} />
+                <Route path="/booking" element={isLoggedIn && selectedOption ? (
+                  <PageTransition>
+                    <BookingPage 
+                      option={selectedOption}
+                      origin={bookingContext?.origin || ''}
+                      destination={bookingContext?.destination || ''}
+                      passengersCount={searchParams?.passengers || 1}
+                      onBack={() => navigate('/results')}
+                      onComplete={(bookingId?: string) => navigate(bookingId ? `/booking-success/${bookingId}` : '/my-trips')}
+                    />
+                  </PageTransition>
+                ) : <Navigate to="/" />} />
+                
+                <Route path="/saved-trips" element={isLoggedIn ? <PageTransition><SavedTripsPage onBack={handleBackToHome} onBookOption={handleInitiateBooking} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/my-trips" element={isLoggedIn ? <PageTransition><MyTripsPage onBack={handleBackToHome} onBookAgain={handleBookAgain} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/wallet" element={isLoggedIn ? <PageTransition><WalletPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/profile" element={isLoggedIn ? <PageTransition><ProfilePage onBack={handleBackToHome} onLogout={handleLogout} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/loyalty" element={isLoggedIn ? <PageTransition><LoyaltyPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/support" element={isLoggedIn ? <PageTransition><SupportPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/alerts" element={isLoggedIn ? <PageTransition><AlertsPage /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/architecture" element={isLoggedIn ? <PageTransition><ArchitecturePage /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/impact" element={isLoggedIn ? <PageTransition><ImpactDashboardPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/documents" element={isLoggedIn ? <PageTransition><DocumentsVaultPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/itinerary" element={isLoggedIn ? <PageTransition><ItineraryBuilderPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/corporate" element={isLoggedIn ? <PageTransition><CorporateDashboardPage /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/group-booking" element={isLoggedIn ? <PageTransition><GroupBookingPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/gift-cards" element={isLoggedIn ? <PageTransition><GiftCardsPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/route-planner" element={isLoggedIn ? <PageTransition><RoutePlannerPage /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/location-search" element={isLoggedIn ? <PageTransition><LocationSearchPage /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/complete-profile" element={isLoggedIn ? <PageTransition><CompleteProfilePage /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/privacy" element={isLoggedIn ? <PageTransition><PrivacyPolicyPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/terms" element={isLoggedIn ? <PageTransition><TermsPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/cancellation" element={isLoggedIn ? <PageTransition><CancellationPortal onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/refer-earn" element={isLoggedIn ? <PageTransition><ReferAndEarnPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/about" element={isLoggedIn ? <PageTransition><AboutUsPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/blog" element={isLoggedIn ? <PageTransition><BlogPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/faq" element={isLoggedIn ? <PageTransition><FAQPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/review/:bookingId" element={isLoggedIn ? <PageTransition><ReviewSubmissionPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/vendor-onboarding" element={isLoggedIn ? <PageTransition><VendorOnboardingPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/booking-success/:bookingId" element={isLoggedIn ? <PageTransition><BookingSuccessPage /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/travel-rules" element={isLoggedIn ? <PageTransition><TravelRulesPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/admin" element={
+                  <AdminRoute>
+                    <PageTransition>
+                      <AdminDashboardPage onBack={handleBackToHome} />
+                    </PageTransition>
+                  </AdminRoute>
+                } />
+                
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </AnimatePresence>
           </Suspense>
         </ErrorBoundary>
       </main>
 
       {location.pathname !== '/login' && <BottomNavigation currentView={currentView as AppView} />}
+      {location.pathname !== '/login' && <Footer />}
       {showOnboarding && <OnboardingGuide onComplete={() => setShowOnboarding(false)} />}
       <CookieConsent />
       {location.pathname !== '/login' && <SOSButton />}

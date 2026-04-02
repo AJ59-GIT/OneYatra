@@ -35,7 +35,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = () => {
     'GROUP_BOOKING': '/group-booking',
     'GIFT_CARDS': '/gift-cards',
     'PRIVACY': '/privacy',
-    'TERMS': '/terms'
+    'TERMS': '/terms',
+    'ADMIN': '/admin'
   };
 
   const onNavigate = (view: AppView) => {

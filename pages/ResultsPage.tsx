@@ -111,21 +111,21 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
               const durations = allOptions.map(o => parseDurationToMins(o.duration));
               const providers = Array.from(new Set(allOptions.map(o => o.provider.split(' ')[0]))).sort();
               
-              const minP = Math.min(...prices);
-              const maxP = Math.max(...prices);
-              const maxD = Math.max(...durations);
-
+              const minP = Math.floor(Math.min(...prices) * 0.9);
+              const maxP = Math.ceil(Math.max(...prices) * 1.1);
+              const maxD = Math.ceil(Math.max(...durations) * 1.5); // Add 50% buffer for real-time updates
+              
               setFilterConstraints({
                   minPrice: minP,
                   maxPrice: maxP,
-                  maxDuration: maxD,
+                  maxDuration: Math.max(maxD, 60),
                   providers: providers
               });
               
               setFilters(prev => ({
                   ...prev,
                   priceRange: [minP, maxP],
-                  maxDuration: maxD
+                  maxDuration: Math.max(maxD, 60)
               }));
           }
           setLoading(false);
@@ -161,18 +161,19 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
 
     // 1. Distance-Aware Filtering
     let filtered = rawOptions.filter(opt => {
-      // If distance is very short, prioritize local modes
+      // If distance is very short, include cabs but prioritize local modes
       if (distance <= 3) {
-        return ['SCOOTER', 'BICYCLE', 'WALK', 'AUTO', 'BIKE_TAXI'].includes(opt.mode);
+        return ['CAB', 'SCOOTER', 'BICYCLE', 'WALK', 'AUTO', 'BIKE_TAXI'].includes(opt.mode);
       }
       if (distance <= 25) {
-        return ['CAB', 'BIKE_TAXI', 'AUTO', 'METRO', 'BUS'].includes(opt.mode);
+        // Cabs, Autos, and Public Transport are all valid for city travel
+        return ['CAB', 'BIKE_TAXI', 'AUTO', 'METRO', 'BUS', 'SUBURBAN_RAIL', 'SCOOTER'].includes(opt.mode);
       }
-      if (distance <= 80) {
-        // Strictly hide flights if road distance < 80km
+      if (distance <= 120) {
+        // Exclude flights for short inter-city distances, but allow everything else
         return opt.mode !== 'FLIGHT';
       }
-      return true; // For > 80km, all modes are allowed
+      return true; // For > 120km, all modes (including Flights and Trains) are allowed
     });
 
     // 2. Optimistic UI: Update with real OSRM data and corrected prices

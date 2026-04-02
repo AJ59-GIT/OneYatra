@@ -24,6 +24,8 @@ export const TransportIcon = ({ mode, className = "h-5 w-5" }: TransportIconProp
       return <Navigation className={className} />;
     case 'METRO':
       return <Train className={className} />;
+    case 'SUBURBAN_RAIL':
+      return <Train className={className} />;
     case 'FERRY':
       return <Anchor className={className} />;
     case 'SHARED_CAB':

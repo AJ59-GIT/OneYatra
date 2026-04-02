@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { HelpCircle, MessageSquare, Plus, Search, ChevronDown, ChevronRight, Send, Paperclip, AlertTriangle, CheckCircle, Clock, X, User, Headphones, FileText, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { HelpCircle, MessageSquare, Plus, Search, ChevronDown, ChevronRight, Send, Paperclip, AlertTriangle, CheckCircle, Clock, X, User, Headphones, FileText, ChevronLeft, RefreshCw, HelpCircle as FAQIcon, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/Button';
 import { SupportTicket, TicketMessage } from '../types';
 import { FAQ_DATA, createTicket, getTickets, addMessage, escalateTicket } from '../services/supportService';
@@ -10,6 +11,7 @@ interface SupportPageProps {
 }
 
 export const SupportPage = ({ onBack }: SupportPageProps) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'HOME' | 'MY_TICKETS' | 'NEW_TICKET'>('HOME');
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -121,6 +123,45 @@ export const SupportPage = ({ onBack }: SupportPageProps) => {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <button 
+                    onClick={() => navigate('/cancellation')}
+                    className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-brand-500 transition-all text-left"
+                >
+                    <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
+                        <RefreshCw className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-gray-900">Cancellation Portal</h4>
+                        <p className="text-[10px] text-gray-500">Cancel trips & track refunds</p>
+                    </div>
+                </button>
+                <button 
+                    onClick={() => navigate('/faq')}
+                    className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-brand-500 transition-all text-left"
+                >
+                    <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center shrink-0">
+                        <FAQIcon className="h-5 w-5 text-brand-600" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-gray-900">Knowledge Base</h4>
+                        <p className="text-[10px] text-gray-500">Searchable FAQs & Guides</p>
+                    </div>
+                </button>
+                <button 
+                    onClick={() => navigate('/travel-rules')}
+                    className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-brand-500 transition-all text-left"
+                >
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                        <ShieldCheck className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-gray-900">Travel Rules & MaaS</h4>
+                        <p className="text-[10px] text-gray-500">Validity, Timings & Providers</p>
+                    </div>
+                </button>
+            </div>
+
             <div className="relative">
                 <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input 

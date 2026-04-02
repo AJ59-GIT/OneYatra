@@ -88,7 +88,7 @@ export const getRoadDistance = async (
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // Increased timeout to 5s
 
   try {
     const osrmRes = await fetch(
@@ -105,8 +105,12 @@ export const getRoadDistance = async (
         geometry: osrmData.routes[0].geometry
       };
     }
-  } catch (error) {
-    console.error("OSRM API error or timeout, falling back to Haversine:", error);
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.warn("OSRM API timeout (5s), falling back to Haversine.");
+    } else {
+      console.error("OSRM API error, falling back to Haversine:", error.message || error);
+    }
   } finally {
     clearTimeout(timeoutId);
   }
@@ -123,7 +127,9 @@ export const getGeminiSuggestions = async (query: string): Promise<LocationSugge
   // On client, use the proxy API to avoid exposing keys and CORS issues
   if (typeof window !== 'undefined') {
     try {
-      const response = await fetch(`/api/locations?source=ai&query=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/locations?source=ai&query=${encodeURIComponent(query)}`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         return await response.json();
       }
@@ -238,49 +244,68 @@ export const searchLocations = async (query: string, biasCoords?: { lat: number,
     })(),
     // Photon API (Fast)
     (async () => {
-      try {
-        const lat = biasCoords?.lat ?? 20.5937;
-        const lon = biasCoords?.lng ?? 78.9629;
-        
-        const params = new URLSearchParams({
-          q: query,
-          limit: '15', // Increased limit for better variety
-          lat: lat.toString(),
-          lon: lon.toString(),
-          lang: 'en'
-        });
+      let retryCount = 0;
+      const maxRetries = 1;
 
-        // Add India bias if no coords provided
-        const path = getPhotonPath(params.toString());
-        const response = await fetch(path);
-        const data = await response.json();
-        
-        if (!data || !data.features) return [];
-
-        return data.features
-          .filter((f: any) => f.properties.country === 'India' || !f.properties.country) // Filter for India
-          .map((f: any) => {
-            const p = f.properties;
-            const name = p.name || p.city || p.street || p.district || 'Unknown Location';
-            const city = p.city || p.district || p.county || p.town || p.village || '';
-            const state = p.state || '';
-            const country = p.country || 'India';
-            
-            return {
-              id: `api-${p.osm_id || Math.random()}`,
-              city: name,
-              state: [city, state].filter(Boolean).join(', '),
-              country: country,
-              type: p.osm_value === 'airport' ? 'AIRPORT' : (p.type === 'house' ? 'ADDRESS' : 'CITY'),
-              lat: f.geometry.coordinates[1],
-              lng: f.geometry.coordinates[0],
-              fullAddress: [name, city, state, country].filter(Boolean).join(', ')
-            } as LocationSuggestion;
+      const attemptFetch = async (): Promise<LocationSuggestion[]> => {
+        try {
+          const lat = biasCoords?.lat ?? 20.5937;
+          const lon = biasCoords?.lng ?? 78.9629;
+          
+          const params = new URLSearchParams({
+            q: query,
+            limit: '15',
+            lat: lat.toString(),
+            lon: lon.toString(),
+            lang: 'en'
           });
-      } catch (error) {
-        console.error("Photon API error:", error);
-        return [];
-      }
+
+          const path = getPhotonPath(params.toString());
+          const response = await fetch(path, {
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            const text = await response.text();
+            console.warn(`[Location API] Status: ${response.status}, Body: ${text.substring(0, 100)}`);
+            return [];
+          }
+
+          const data = await response.json();
+          if (!data || !data.features) return [];
+
+          return data.features
+            .filter((f: any) => f.properties.country === 'India' || !f.properties.country)
+            .map((f: any) => {
+              const p = f.properties;
+              const name = p.name || p.city || p.street || p.district || 'Unknown Location';
+              const city = p.city || p.district || p.county || p.town || p.village || '';
+              const state = p.state || '';
+              const country = p.country || 'India';
+              
+              return {
+                id: `api-${p.osm_id || Math.random()}`,
+                city: name,
+                state: [city, state].filter(Boolean).join(', '),
+                country: country,
+                type: p.osm_value === 'airport' ? 'AIRPORT' : (p.type === 'house' ? 'ADDRESS' : 'CITY'),
+                lat: f.geometry.coordinates[1],
+                lng: f.geometry.coordinates[0],
+                fullAddress: [name, city, state, country].filter(Boolean).join(', ')
+              } as LocationSuggestion;
+            });
+        } catch (error: any) {
+          if (retryCount < maxRetries) {
+            retryCount++;
+            console.warn(`[Location API] Fetch failed, retrying (${retryCount}/${maxRetries})...`, error.message);
+            return await attemptFetch();
+          }
+          console.error("Photon API error:", error.message || error);
+          return [];
+        }
+      };
+
+      return await attemptFetch();
     })()
   ]);
 
@@ -310,7 +335,9 @@ export const searchLocations = async (query: string, biasCoords?: { lat: number,
 export const getCityFromCoordinates = async (lat: number, lng: number): Promise<string | null> => {
   try {
     // Use Nominatim via our server proxy (Zero Cost)
-    const response = await fetch(getPhotonPath(`lat=${lat}&lon=${lng}`, true));
+    const response = await fetch(getPhotonPath(`lat=${lat}&lon=${lng}`, true), {
+      credentials: 'include'
+    });
     const data = await response.json();
     
     if (data.features && data.features.length > 0) {

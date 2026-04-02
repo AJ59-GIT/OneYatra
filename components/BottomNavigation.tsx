@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Search, Heart, User, Ticket, Sparkles } from 'lucide-react';
+import { Home, Search, Heart, User, Ticket, Sparkles, Server } from 'lucide-react';
 import { AppView } from '../types';
 import { useVibration } from '../hooks/useVibration';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BottomNavigationProps {
   currentView: AppView;
@@ -14,6 +15,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ currentView 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { vibrateTap } = useVibration();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,7 +40,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ currentView 
     { id: 'HOME', icon: Home, label: 'Home', path: '/' },
     { id: 'RESULTS', icon: Search, label: 'Search', path: '/results' },
     { id: 'MY_TRIPS', icon: Ticket, label: 'Trips', path: '/my-trips' },
-    { id: 'LOYALTY', icon: Sparkles, label: 'Offers', path: '/loyalty' },
+    ...(isAdmin ? [{ id: 'ADMIN', icon: Server, label: 'Admin', path: '/admin' }] : []),
     { id: 'PROFILE', icon: User, label: 'Profile', path: '/profile' },
   ];
 

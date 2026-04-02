@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Download, ArrowRight, Calendar, MapPin, Clock, RotateCw, FileText, CheckCircle, XCircle, AlertTriangle, Plane, Train, Bus, Car, Star } from 'lucide-react';
 import { Booking, TransportMode } from '../types';
 import { getUserBookings, cancelUserBooking } from '../services/bookingService';
@@ -22,6 +23,7 @@ type Tab = 'UPCOMING' | 'COMPLETED' | 'CANCELLED';
 const ITEMS_PER_PAGE = 5;
 
 export const MyTripsPage = ({ onBack, onBookAgain }: MyTripsPageProps) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('UPCOMING');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,8 +102,7 @@ export const MyTripsPage = ({ onBack, onBookAgain }: MyTripsPageProps) => {
           alert(eligibility.reason);
           return;
       }
-      setReviewContext({ provider: booking.option.provider, bookingId: booking.id });
-      setReviewModalOpen(true);
+      navigate(`/review/${booking.id}`);
   };
 
   const getFilteredBookings = () => {

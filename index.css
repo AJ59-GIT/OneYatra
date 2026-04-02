@@ -1,4 +1,29 @@
 
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  
+  --color-brand-50: rgb(var(--color-brand-50) / <alpha-value>);
+  --color-brand-100: rgb(var(--color-brand-100) / <alpha-value>);
+  --color-brand-200: rgb(var(--color-brand-200) / <alpha-value>);
+  --color-brand-300: rgb(var(--color-brand-300) / <alpha-value>);
+  --color-brand-400: rgb(var(--color-brand-400) / <alpha-value>);
+  --color-brand-500: rgb(var(--color-brand-500) / <alpha-value>);
+  --color-brand-600: rgb(var(--color-brand-600) / <alpha-value>);
+  --color-brand-700: rgb(var(--color-brand-700) / <alpha-value>);
+  --color-brand-800: rgb(var(--color-brand-800) / <alpha-value>);
+  --color-brand-900: rgb(var(--color-brand-900) / <alpha-value>);
+
+  --breakpoint-xs: 480px;
+
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+  --animate-shimmer: shimmer 1.5s infinite linear;
+}
+
 :root {
   --color-brand-50: 255 247 237;  /* #fff7ed */
   --color-brand-100: 255 237 213; /* #ffedd5 */
@@ -37,10 +62,10 @@ body {
   color: #cbd5e1 !important; /* slate-300 */
 }
 .dark .text-gray-500 {
-  color: #94a3b8 !important; /* slate-400 */
+  color: #cbd5e1 !important; /* slate-300 */
 }
 .dark .text-gray-400 {
-  color: #64748b !important; /* slate-500 */
+  color: #94a3b8 !important; /* slate-400 */
 }
 
 .dark .text-slate-900 {
@@ -56,7 +81,10 @@ body {
   color: #cbd5e1 !important;
 }
 .dark .text-slate-500 {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important; /* slate-300 */
+}
+.dark .text-slate-400 {
+  color: #94a3b8 !important; /* slate-400 */
 }
 
 /* Global Dark Mode Background & Border Adjustments */

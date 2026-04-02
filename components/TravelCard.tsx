@@ -112,6 +112,7 @@ export const TravelCard = ({
               option.mode === 'CAB' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400' :
               option.mode === 'AUTO' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' :
               option.mode === 'METRO' ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400' :
+              option.mode === 'SUBURBAN_RAIL' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400' :
               option.mode === 'FLIGHT' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' :
               option.mode === 'TRAIN' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' :
               option.mode === 'BUS' ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' :
@@ -152,6 +153,27 @@ export const TravelCard = ({
               
               {/* New Trust Indicators */}
               <TrustIndicators badges={displayOption.trustBadges || []} />
+
+              {/* Features Tags */}
+              {option.features && option.features.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {option.features.slice(0, 3).map((feature, idx) => (
+                    <span key={idx} className="text-[9px] font-bold px-1.5 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded border border-gray-200 dark:border-slate-700">
+                      {feature}
+                    </span>
+                  ))}
+                  {option.features.length > 3 && (
+                    <span className="text-[9px] font-bold text-gray-400 dark:text-slate-500">+{option.features.length - 3}</span>
+                  )}
+                </div>
+              )}
+
+              {/* Mood Indicator */}
+              {option.mood && (
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                  <span className="capitalize">Mood: {option.mood}</span>
+                </div>
+              )}
 
               {/* Real-time Status */}
               {option.realTimeStatus && (

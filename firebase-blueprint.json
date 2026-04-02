@@ -14,9 +14,30 @@
         "loyaltyPoints": { "type": "number" },
         "walletBalance": { "type": "number" },
         "preferences": { "type": "object" },
-        "addresses": { "type": "array" }
+        "addresses": { "type": "array" },
+        "role": { "type": "string", "enum": ["USER", "ADMIN"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isActive": { "type": "boolean" }
       },
-      "required": ["email", "name"]
+      "required": ["email", "name", "createdAt"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Stores MaaS booking information.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "mode": { "type": "string" },
+        "provider": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "status": { "type": "string", "enum": ["CONFIRMED", "PENDING", "CANCELLED", "FAILED"] },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "mode", "amount", "status", "timestamp"]
     },
     "UserDocument": {
       "title": "User Document",
@@ -45,6 +66,10 @@
     "/users/{userId}/documents/{docId}": {
       "schema": "UserDocument",
       "description": "Subcollection of documents belonging to a user."
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Global collection of all bookings, accessible by admins."
     }
   }
 }

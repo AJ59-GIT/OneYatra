@@ -8,7 +8,7 @@
 const ALLOWED_PROVIDERS = [
   'Uber', 'Ola', 'Rapido', 'BluSmart', 
   'IndiGo', 'Air India', 'Vistara', 
-  'IRCTC', 'Vande Bharat', 
+  'IRCTC', 'Vande Bharat', 'UTS',
   'RedBus', 'ZingBus', 'IntrCity'
 ];
 
@@ -81,6 +81,14 @@ export const generateDeepLink = (
         isUniversal: false,
         fallbackUrl: 'https://www.irctc.co.in/nget/train-search',
         androidIntent: `intent://train_search?src=${safeOrigin}&dst=${safeDest}#Intent;scheme=irctcconnect;package=com.irctc.rail.connect;end`
+      };
+
+    case 'UTS':
+      return {
+        url: `uts://`,
+        isUniversal: false,
+        fallbackUrl: 'https://www.utsonline.indianrail.gov.in/',
+        androidIntent: `intent://#Intent;package=com.cris.utsmobile;scheme=uts;end`
       };
 
     case 'RedBus':

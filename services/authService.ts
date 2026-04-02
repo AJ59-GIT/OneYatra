@@ -150,8 +150,11 @@ export const initAuthListener = (callback: (user: UserProfile | null, rawUser: U
       let profile: UserProfile = {
         email: user.email || '',
         name: user.displayName || 'User',
+        role: (user.email === 'anjeet.cs23064@sstcollege.edu.in') ? 'ADMIN' : 'USER',
         preferences: {},
-        addresses: []
+        addresses: [],
+        createdAt: new Date().toISOString(),
+        isActive: true
       };
       
       if (user.photoURL) {

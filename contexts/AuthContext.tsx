@@ -9,6 +9,7 @@ interface AuthContextType {
   firebaseUser: User | null;
   loading: boolean;
   isLoggedIn: boolean;
+  isAdmin: boolean;
   isAuthReady: boolean;
   logout: () => Promise<void>;
 }
@@ -44,7 +45,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     firebaseUser,
     loading,
-    isLoggedIn: !!firebaseUser,
+    isLoggedIn: !!firebaseUser && user?.isActive !== false,
+    isAdmin: user?.role === 'ADMIN' && user?.isActive !== false,
     isAuthReady,
     logout
   };

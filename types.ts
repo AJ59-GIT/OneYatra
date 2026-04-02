@@ -2,9 +2,9 @@
 import React from 'react';
 
 // --- Global Types ---
-export type TransportMode = 'CAB' | 'BUS' | 'TRAIN' | 'FLIGHT' | 'MIXED' | 'BIKE_TAXI' | 'SCOOTER' | 'AUTO' | 'METRO' | 'FERRY' | 'SHARED_CAB' | 'WALK' | 'BICYCLE';
+export type TransportMode = 'CAB' | 'BUS' | 'TRAIN' | 'FLIGHT' | 'MIXED' | 'BIKE_TAXI' | 'SCOOTER' | 'AUTO' | 'METRO' | 'FERRY' | 'SHARED_CAB' | 'WALK' | 'BICYCLE' | 'SUBURBAN_RAIL';
 export type TravelMood = 'PRODUCTIVE' | 'RELAXED' | 'ADVENTUROUS' | 'ECO_FRIENDLY';
-export type AppView = 'LOGIN' | 'HOME' | 'RESULTS' | 'BOOKING' | 'MY_TRIPS' | 'PROFILE' | 'SAVED_TRIPS' | 'WALLET' | 'LOYALTY' | 'SUPPORT' | 'ALERTS' | 'IMPACT' | 'DOCUMENTS' | 'ITINERARY' | 'CORPORATE' | 'GROUP_BOOKING' | 'GIFT_CARDS' | 'ARCHITECTURE' | 'PRIVACY' | 'TERMS';
+export type AppView = 'LOGIN' | 'HOME' | 'RESULTS' | 'BOOKING' | 'MY_TRIPS' | 'PROFILE' | 'SAVED_TRIPS' | 'WALLET' | 'LOYALTY' | 'SUPPORT' | 'ALERTS' | 'IMPACT' | 'DOCUMENTS' | 'ITINERARY' | 'CORPORATE' | 'GROUP_BOOKING' | 'GIFT_CARDS' | 'ARCHITECTURE' | 'PRIVACY' | 'TERMS' | 'ADMIN';
 export type Language = 'en' | 'hi' | 'ta' | 'bn' | 'te' | 'ur';
 export type Currency = 'INR' | 'USD' | 'EUR' | 'GBP';
 
@@ -97,12 +97,14 @@ export interface FilterState {
 
 // --- User & Profile Types ---
 export interface UserProfile {
+  id?: string;
   email: string;
   name: string;
   phone?: string;
   dob?: string;
   gender?: 'M' | 'F' | 'O';
   avatar?: string;
+  role?: 'USER' | 'ADMIN';
   addresses?: Address[];
   savedTravelers?: SavedTraveler[];
   emergencyContact?: EmergencyContact;
@@ -134,6 +136,8 @@ export interface UserProfile {
   pointHistory?: PointTransaction[];
   referrals?: Referral[];
   referralCode?: string;
+  createdAt?: string;
+  isActive?: boolean;
   medicalInfo?: {
     bloodGroup?: string;
     allergies?: string;

@@ -16,7 +16,9 @@ service cloud.firestore {
     //   - avatar: string (optional, URL)
     //   - loyaltyPoints: number (optional)
     //   - walletBalance: number (optional)
-    //   - role: string (optional, enum: admin, user)
+    //   - role: string (optional, enum: ADMIN, USER)
+    //   - createdAt: string (required, date-time)
+    //   - isActive: boolean (optional)
     //   - preferences: map (optional)
     //   - addresses: array (optional)
     //
@@ -38,14 +40,13 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isAuthenticated() &&
              request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in";
-             // Removed email_verified check temporarily to rule out token issues
     }
 
     // Role Admin check (Database based)
     function isRoleAdmin() {
       return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
     }
 
     function isAdmin() {
@@ -57,16 +58,18 @@ service cloud.firestore {
     }
 
     function isValidUser(data) {
-      return data.keys().hasAll(['email', 'name']) &&
+      return data.keys().hasAll(['email', 'name', 'createdAt']) &&
              data.email is string && isValidEmail(data.email) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.createdAt is string &&
              (!('phone' in data) || (data.phone is string && data.phone.size() <= 20)) &&
              (!('dob' in data) || (data.dob is string)) &&
              (!('gender' in data) || data.gender in ['M', 'F', 'O']) &&
              (!('avatar' in data) || (data.avatar is string && data.avatar.size() < 2000)) &&
              (!('loyaltyPoints' in data) || data.loyaltyPoints is number) &&
              (!('walletBalance' in data) || data.walletBalance is number) &&
-             (!('role' in data) || data.role in ['admin', 'user']) &&
+             (!('role' in data) || data.role in ['ADMIN', 'USER']) &&
+             (!('isActive' in data) || data.isActive is bool) &&
              (!('preferences' in data) || data.preferences is map) &&
              (!('addresses' in data) || data.addresses is list);
     }
@@ -76,27 +79,44 @@ service cloud.firestore {
     }
 
     match /users/{userId}/documents/{docId} {
-      allow read, write: if isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in");
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
     }
 
     match /users/{userId} {
       // Allow read if owner OR admin
-      allow read: if isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in");
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       
+      // Allow listing all users for admins
+      allow list: if isAdmin();
+
       // Only allow users to create their own profile
       allow create: if isAuthenticated() && request.auth.uid == userId && 
                       isValidUser(request.resource.data) && 
-                      (!('role' in request.resource.data) || request.resource.data.role == 'user');
+                      (!('role' in request.resource.data) || request.resource.data.role == 'USER' || isSuperAdmin());
       
       // Only allow users to update their own profile, role can only be changed by admin
       allow update: if isAuthenticated() && (
                        (request.auth.uid == userId && 
                         isValidUser(request.resource.data) && 
-                        (request.resource.data.role == resource.data.role || request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in")) || 
-                       request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in"
+                        (request.resource.data.role == resource.data.role || isAdmin())) || 
+                       isAdmin()
                      );
       
-      allow delete: if request.auth.token.email == "anjeet.cs23064@sstcollege.edu.in";
+      allow delete: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      // Admins can read all bookings
+      allow read, list: if isAdmin();
+      
+      // Users can only read their own bookings (assuming userId field exists)
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Allow creation if authenticated
+      allow create: if isAuthenticated();
+
+      // Only admins can update or delete bookings
+      allow update, delete: if isAdmin();
     }
   }
 }
