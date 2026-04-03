@@ -1,36 +1,31 @@
 
 import React from 'react';
-import { ArrowRight, Plane, ShieldCheck, Check, Coffee, Zap, Leaf } from 'lucide-react';
-import { TravelOption, Meal, SpecialRequestOption } from '../../types';
+import { ArrowRight, ShieldCheck, Check, Leaf } from 'lucide-react';
+import { TravelOption } from '../../types';
 import { Button } from '../Button';
-import { BookingMealSelection } from './BookingMealSelection';
-import { BookingSpecialRequests } from './BookingSpecialRequests';
 
-interface BookingAddOnsProps {
+interface BookingInsuranceProps {
   option: TravelOption;
   origin: string;
   destination: string;
   passengersCount: number;
-  onProceed: (meal: Meal | null, requests: SpecialRequestOption[], notes: string, insurance: boolean) => void;
+  onProceed: (insurance: boolean, carbonOffset: boolean) => void;
   onBack: () => void;
 }
 
-export const BookingAddOns: React.FC<BookingAddOnsProps> = ({
+export const BookingInsurance: React.FC<BookingInsuranceProps> = ({
   option, origin, destination, passengersCount, onProceed, onBack
 }) => {
-  const [selectedMeal, setSelectedMeal] = React.useState<Meal | null>(null);
-  const [selectedRequests, setSelectedRequests] = React.useState<SpecialRequestOption[]>([]);
-  const [notes, setNotes] = React.useState('');
   const [insurance, setInsurance] = React.useState(true);
   const [carbonOffset, setCarbonOffset] = React.useState(false);
 
   const handleProceed = () => {
-    onProceed(selectedMeal, selectedRequests, notes, insurance);
+    onProceed(insurance, carbonOffset);
   };
 
   return (
     <div className="animate-in fade-in slide-in-from-right-8 duration-300">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Review & Add-ons</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Travel Insurance & Extras</h2>
       
       {/* Trip Summary Card */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-6 shadow-sm">
@@ -83,36 +78,14 @@ export const BookingAddOns: React.FC<BookingAddOnsProps> = ({
          </div>
       </div>
 
-      {/* Meal Selection */}
-      {['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode) && (
-         <div className="mb-8">
-            <BookingMealSelection 
-               passengers={Array(passengersCount).fill({})}
-               onConfirmed={(meal, reqNotes) => {
-                  setSelectedMeal(meal);
-                  setNotes(reqNotes);
-               }}
-               onSkipped={() => setSelectedMeal(null)}
-               currency={option.currency}
-            />
-         </div>
-      )}
-
-      {/* Special Requests */}
-      <div className="mb-8">
-         <BookingSpecialRequests 
-            mode={option.mode}
-            onConfirmed={(requests, reqNotes) => {
-               setSelectedRequests(requests);
-               setNotes(prev => prev ? `${prev}. ${reqNotes}` : reqNotes);
-            }}
-            onSkipped={() => setSelectedRequests([])}
-         />
+      <div className="flex gap-4">
+        <Button variant="outline" onClick={onBack} className="flex-1 py-4">
+          Back
+        </Button>
+        <Button onClick={handleProceed} className="flex-[2] py-4 text-lg shadow-lg shadow-brand-500/30">
+          Proceed to Meals
+        </Button>
       </div>
-
-      <Button onClick={handleProceed} className="w-full py-4 text-lg shadow-lg shadow-brand-500/30">
-         Proceed to Passenger Details
-      </Button>
     </div>
   );
 };

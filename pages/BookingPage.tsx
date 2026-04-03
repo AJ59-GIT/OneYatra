@@ -13,6 +13,9 @@ import { validateGiftCard, redeemGiftCard } from '../services/giftCardService';
 import { getDocuments } from '../services/documentService'; 
 import { validateIdNumber, IdDocType } from '../utils/idValidation';
 import { BookingDetails } from '../components/booking/BookingDetails';
+import { BookingInsurance } from '../components/booking/BookingInsurance';
+import { BookingMealSelection } from '../components/booking/BookingMealSelection';
+import { BookingSpecialRequests } from '../components/booking/BookingSpecialRequests';
 import { BookingPassengerInfo } from '../components/booking/BookingPassengerInfo';
 import { BookingPayment } from '../components/booking/BookingPayment';
 import { BookingStatus } from '../components/booking/BookingStatus';
@@ -26,7 +29,7 @@ interface BookingPageProps {
   onComplete: (bookingId?: string) => void;
 }
 
-type Step = 'DETAILS' | 'PASSENGER_INFO' | 'PAYMENT' | 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'PENDING_APPROVAL';
+type Step = 'DETAILS' | 'INSURANCE' | 'MEALS' | 'SPECIAL_REQUESTS' | 'PASSENGER_INFO' | 'PAYMENT' | 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'PENDING_APPROVAL';
 type PaymentMethod = 'UPI' | 'CARD' | 'WALLET' | 'NETBANKING' | 'PAYLATER' | 'CORPORATE_BILL';
 
 const PROMO_CODES: Record<string, { type: 'FLAT' | 'PERCENT', value: number, minAmount: number, maxDiscount?: number }> = {
@@ -56,15 +59,15 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
   // Add-on State
   const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
   const [seatCost, setSeatCost] = useState(0);
-  
-  // Re-adding as state to ensure they are available in all handlers
-  const [mealCost] = useState(0);
-  const [insuranceCost] = useState(0);
-  const [specialRequestCost] = useState(0);
-  const [hasInsurance] = useState(false);
-  const [selectedMeal] = useState(null);
-  const [specialRequestNotes] = useState('');
-  const [selectedRequests] = useState<SpecialRequestOption[]>([]);
+  const [mealCost, setMealCost] = useState(0);
+  const [insuranceCost, setInsuranceCost] = useState(0);
+  const [carbonOffsetCost, setCarbonOffsetCost] = useState(0);
+  const [specialRequestCost, setSpecialRequestCost] = useState(0);
+  const [hasInsurance, setHasInsurance] = useState(false);
+  const [hasCarbonOffset, setHasCarbonOffset] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const [specialRequestNotes, setSpecialRequestNotes] = useState('');
+  const [selectedRequests, setSelectedRequests] = useState<SpecialRequestOption[]>([]);
 
   // Cancellation Policy State
   const [isPolicyExpanded, setIsPolicyExpanded] = useState(false);
@@ -246,6 +249,49 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
     setSelectedSeats(seats);
     const extra = seats.reduce((sum, s) => sum + s.price, 0);
     setSeatCost(extra);
+    setStep('INSURANCE');
+  };
+
+  const handleInsuranceProceed = (insurance: boolean, carbonOffset: boolean) => {
+    setHasInsurance(insurance);
+    setHasCarbonOffset(carbonOffset);
+    
+    const iCost = insurance ? (199 * passengersCount) : 0;
+    const cCost = carbonOffset ? 49 : 0;
+    
+    setInsuranceCost(iCost);
+    setCarbonOffsetCost(cCost);
+    
+    if (['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode)) {
+      setStep('MEALS');
+    } else {
+      setStep('SPECIAL_REQUESTS');
+    }
+  };
+
+  const handleMealConfirmed = (meal: Meal | null, notes: string) => {
+    setSelectedMeal(meal);
+    setSpecialRequestNotes(prev => prev ? `${prev}. ${notes}` : notes);
+    setMealCost(meal ? (meal.price || 0) : 0);
+    setStep('SPECIAL_REQUESTS');
+  };
+
+  const handleMealSkipped = () => {
+    setSelectedMeal(null);
+    setMealCost(0);
+    setStep('SPECIAL_REQUESTS');
+  };
+
+  const handleSpecialRequestsConfirmed = (requests: SpecialRequestOption[], notes: string) => {
+    setSelectedRequests(requests);
+    setSpecialRequestNotes(prev => prev ? `${prev}. ${notes}` : notes);
+    setSpecialRequestCost(requests.reduce((sum, r) => sum + (r.price || 0), 0));
+    setStep('PASSENGER_INFO');
+  };
+
+  const handleSpecialRequestsSkipped = () => {
+    setSelectedRequests([]);
+    setSpecialRequestCost(0);
     setStep('PASSENGER_INFO');
   };
 
@@ -282,10 +328,15 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
   };
 
   const handleStartPayment = (totalExtras = 0) => {
-    const finalPrice = option.price + totalExtras;
+    const finalPrice = option.price + seatCost + mealCost + specialRequestCost + insuranceCost + carbonOffsetCost;
     
     const newBooking = createBooking({ ...option, price: finalPrice }, passengers);
     newBooking.selectedSeats = selectedSeats;
+    newBooking.selectedMeal = selectedMeal;
+    newBooking.selectedAddOns = selectedRequests;
+    newBooking.specialRequestNotes = specialRequestNotes;
+    newBooking.hasInsurance = hasInsurance;
+    newBooking.hasCarbonOffset = hasCarbonOffset;
     
     newBooking.origin = origin;
     newBooking.destination = destination;
@@ -345,7 +396,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
   };
 
   const handleApplyPromo = async () => {
-    const subTotal = option.price + seatCost + mealCost + specialRequestCost;
+    const subTotal = option.price + seatCost;
     if (!promoCode.trim()) return;
     setPromoStatus('VALIDATING');
     setPromoMessage('');
@@ -371,7 +422,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
   };
 
   const handleApplyGiftCard = async () => {
-      const subTotal = option.price + seatCost + mealCost + specialRequestCost;
+      const subTotal = option.price + seatCost;
       const discountAmount = appliedDiscount ? appliedDiscount.amount : 0;
       let paymentFee = paymentMethod === 'NETBANKING' ? 20 : 0;
       const currentTotal = Math.max(0, subTotal - discountAmount + paymentFee);
@@ -422,7 +473,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
 
   const handlePay = async () => {
     if (!booking) return;
-    const subTotal = option.price + seatCost + mealCost + specialRequestCost + insuranceCost;
+    const subTotal = option.price + seatCost + insuranceCost;
     const discountAmount = appliedDiscount ? appliedDiscount.amount : 0;
     let paymentFee = 0;
     if (paymentMethod === 'NETBANKING') paymentFee = 20;
@@ -533,10 +584,20 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
     <div className="max-w-4xl mx-auto px-4 py-8">
       {step !== 'CONFIRMED' && step !== 'FAILED' && step !== 'PENDING_APPROVAL' && (
         <button 
-          onClick={onBack}
+          onClick={() => {
+            if (step === 'DETAILS') onBack();
+            else if (step === 'INSURANCE') setStep('DETAILS');
+            else if (step === 'MEALS') setStep('INSURANCE');
+            else if (step === 'SPECIAL_REQUESTS') {
+              if (['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode)) setStep('MEALS');
+              else setStep('INSURANCE');
+            }
+            else if (step === 'PASSENGER_INFO') setStep('SPECIAL_REQUESTS');
+            else if (step === 'PAYMENT') setStep('PASSENGER_INFO');
+          }}
           className="flex items-center gap-2 text-gray-500 hover:text-brand-600 mb-6 transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Search
+          <ArrowLeft className="h-4 w-4" /> Back
         </button>
       )}
 
@@ -548,6 +609,34 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
           passengersCount={passengersCount}
           onProceed={handleDetailsProceed}
           onBack={onBack}
+        />
+      )}
+
+      {step === 'INSURANCE' && (
+        <BookingInsurance 
+          option={option}
+          origin={origin}
+          destination={destination}
+          passengersCount={passengersCount}
+          onProceed={handleInsuranceProceed}
+          onBack={() => setStep('DETAILS')}
+        />
+      )}
+
+      {step === 'MEALS' && (
+        <BookingMealSelection 
+          passengers={Array(passengersCount).fill({})}
+          onConfirmed={handleMealConfirmed}
+          onSkipped={handleMealSkipped}
+          currency={option.currency}
+        />
+      )}
+
+      {step === 'SPECIAL_REQUESTS' && (
+        <BookingSpecialRequests 
+          mode={option.mode}
+          onConfirmed={handleSpecialRequestsConfirmed}
+          onSkipped={handleSpecialRequestsSkipped}
         />
       )}
 
@@ -566,7 +655,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
           updatePassenger={updatePassenger}
           fillFromVault={fillFromVault}
           onProceed={handlePassengerInfoProceed}
-          onBack={() => setStep('DETAILS')}
+          onBack={() => setStep('SPECIAL_REQUESTS')}
         />
       )}
 
@@ -615,7 +704,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
           onRemoveGiftCard={handleRemoveGiftCard}
           onDeleteSavedCard={handleDeleteSavedCard}
           onPay={handlePay}
-          subTotal={option.price + seatCost + mealCost + specialRequestCost + insuranceCost}
+          subTotal={option.price + seatCost + mealCost + specialRequestCost + insuranceCost + carbonOffsetCost}
           seatCost={seatCost}
           mealCost={mealCost}
           specialRequestCost={specialRequestCost}

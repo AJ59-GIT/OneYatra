@@ -348,6 +348,7 @@ export const BookingPayment: React.FC<BookingPaymentProps> = ({
                   {seatCost > 0 && <span>Seats: ₹{seatCost.toLocaleString()}</span>}
                   {mealCost > 0 && <span>Meals: ₹{mealCost.toLocaleString()}</span>}
                   {specialRequestCost > 0 && <span>Extras: ₹{specialRequestCost.toLocaleString()}</span>}
+                  {booking.hasCarbonOffset && <span>Offset: ₹49</span>}
                   {paymentFee > 0 && <span>Fee: ₹{paymentFee.toLocaleString()}</span>}
               </div>
           </div>

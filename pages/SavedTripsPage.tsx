@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Heart, ArrowLeft, MapPin, Calendar } from 'lucide-react';
+import { Heart, ArrowLeft, MapPin } from 'lucide-react';
 import { SavedTrip, TravelOption } from '../types';
 import { getSavedTrips, removeTrip } from '../services/savedTripsService';
 import { TravelCard } from '../components/TravelCard';
@@ -22,15 +22,34 @@ export const SavedTripsPage = ({ onBack, onBookOption }: SavedTripsPageProps) =>
     setSavedTrips(removeTrip(id));
   };
 
-  // Group trips by Route + Date
+  // Group trips by Route only (ignore date)
   const groupedTrips = savedTrips.reduce((groups, trip) => {
-    const key = `${trip.origin} to ${trip.destination} on ${trip.date}`;
+    const key = `${trip.origin} to ${trip.destination}`;
     if (!groups[key]) {
       groups[key] = [];
     }
     groups[key].push(trip);
     return groups;
   }, {} as Record<string, SavedTrip[]>);
+
+  const handleBookSavedTrip = (trip: SavedTrip) => {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
+    
+    // Calculate new arrival time based on original duration
+    // For simplicity, we'll just keep the original duration if possible
+    // or just update the departure time to 'Now'
+    
+    const updatedOption: TravelOption = {
+      ...trip.option,
+      departureTime: timeStr,
+      // We could calculate arrivalTime here, but usually the provider handles it.
+      // For the UI, let's just keep the original duration and update arrival accordingly if we can parse it.
+    };
+
+    onBookOption(updatedOption, { origin: trip.origin, destination: trip.destination });
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-8 duration-500 pb-24">
@@ -66,20 +85,13 @@ export const SavedTripsPage = ({ onBack, onBookOption }: SavedTripsPageProps) =>
         />
       ) : (
         <div className="space-y-8">
-           {Object.entries(groupedTrips).map(([groupTitle, trips]) => {
-              // Parse group title for display
-              const [route, date] = groupTitle.split(' on ');
-              
+           {Object.entries(groupedTrips).map(([route, trips]) => {
               return (
-                 <div key={groupTitle} className="bg-slate-50/50 rounded-xl p-4 sm:p-6 border border-gray-100">
+                 <div key={route} className="bg-slate-50/50 rounded-xl p-4 sm:p-6 border border-gray-100">
                     <div className="flex items-center gap-4 mb-4">
                        <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-brand-500" />
                           <span className="font-bold text-gray-900 text-sm">{route}</span>
-                       </div>
-                       <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-500" />
-                          <span className="font-medium text-gray-600 text-sm">{new Date(date).toLocaleDateString()}</span>
                        </div>
                     </div>
 
@@ -88,7 +100,7 @@ export const SavedTripsPage = ({ onBack, onBookOption }: SavedTripsPageProps) =>
                           <div key={trip.id} className="relative group">
                              <TravelCard 
                                 option={trip.option} 
-                                onBook={(opt) => onBookOption(opt, { origin: trip.origin, destination: trip.destination })}
+                                onBook={() => handleBookSavedTrip(trip)}
                                 isSaved={true}
                                 onToggleSave={() => handleRemove(trip.option.id)}
                              />

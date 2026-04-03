@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Shield, User, ChevronUp, ChevronDown, RotateCw } from 'lucide-react';
+import { Shield, User, ChevronUp, ChevronDown, RotateCw, X, CheckCircle } from 'lucide-react';
 import { Passenger, SavedTraveler, UserDocument, TravelOption } from '../../types';
 import { Button } from '../Button';
 import { Input } from '../Input';
@@ -179,6 +179,47 @@ export const BookingPassengerInfo: React.FC<BookingPassengerInfoProps> = ({
       <Button onClick={onProceed} className="w-full py-4 text-lg shadow-lg shadow-brand-500/30">
          Proceed to Payment
       </Button>
+
+      {/* Vault Selection Modal */}
+      {activeVaultIndex !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center">
+              <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Shield className="h-5 w-5 text-indigo-600" /> Select Document
+              </h3>
+              <button onClick={() => setActiveVaultIndex(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <X className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto space-y-3">
+              {vaultDocs.length === 0 ? (
+                <div className="text-center py-8">
+                  <Shield className="h-12 w-12 text-gray-200 dark:text-slate-700 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No documents found in your vault.</p>
+                </div>
+              ) : (
+                vaultDocs.map(doc => (
+                  <button
+                    key={doc.id}
+                    onClick={() => {
+                      fillFromVault(doc);
+                      setActiveVaultIndex(null);
+                    }}
+                    className="w-full text-left p-4 rounded-xl border border-gray-100 dark:border-slate-700 hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all group"
+                  >
+                    <div className="font-bold text-sm text-gray-900 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-300">{doc.holderName}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex justify-between">
+                      <span>{doc.type} • {doc.number}</span>
+                      {doc.isVerified && <span className="text-green-600 flex items-center gap-1 font-medium"><CheckCircle className="h-3 w-3" /> Verified</span>}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

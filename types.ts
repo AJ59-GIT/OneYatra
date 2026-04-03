@@ -213,6 +213,9 @@ export interface Booking {
   selectedMeal?: Meal | null;
   specialRequests?: string;
   selectedAddOns?: SpecialRequestOption[];
+  specialRequestNotes?: string;
+  hasInsurance?: boolean;
+  hasCarbonOffset?: boolean;
   isCorporate?: boolean;
   policyViolations?: string[];
   discount?: { code: string, amount: number };
