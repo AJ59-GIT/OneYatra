@@ -89,7 +89,7 @@ const CompleteProfilePage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col">
       <div className="flex-grow flex items-center justify-center p-4 py-12">
         <div className="max-w-xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
-          <div className="bg-brand-600 p-8 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-br from-orange-600 via-brand-500 to-amber-500 p-8 text-white relative overflow-hidden">
             <div className="relative z-10">
               <h1 className="text-2xl font-bold mb-2">Complete Your Profile</h1>
               <p className="text-brand-100 text-sm">Help us personalize your travel experience by providing a few more details.</p>

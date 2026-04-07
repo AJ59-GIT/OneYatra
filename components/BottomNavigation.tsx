@@ -52,7 +52,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ currentView 
   return (
     <nav
       aria-label="Mobile Navigation"
-      className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 pb-safe z-50 transition-transform duration-300 md:hidden ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
+      className={`fixed bottom-0 left-0 right-0 bg-app-card border-t border-app-border pb-safe z-50 transition-transform duration-300 md:hidden ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
     >
       <div className="flex justify-around items-center h-16 px-2">
         {navItems.map((item) => {
@@ -61,7 +61,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ currentView 
             <button
               key={item.id}
               onClick={() => handleNavClick(item.path)}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-brand-600 dark:text-brand-500' : 'text-gray-500 dark:text-slate-400'}`}
+              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-brand-600 dark:text-brand-500' : 'text-app-text opacity-50'}`}
               aria-current={isActive ? 'page' : undefined}
               aria-label={item.label}
             >

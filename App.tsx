@@ -167,11 +167,11 @@ const AppContent = () => {
   
   if (isAuthReady && firebaseUser && user?.isActive === false) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6 text-center transition-colors">
-        <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-2xl rounded-3xl">
+      <div className="min-h-screen bg-app-bg flex items-center justify-center p-6 text-center transition-colors">
+        <div className="max-w-md w-full bg-app-card border border-app-border p-8 shadow-2xl rounded-3xl">
           <XCircle className="h-16 w-16 text-red-600 dark:text-red-500 mx-auto mb-6" />
-          <h1 className="text-2xl font-serif italic font-bold mb-4 text-slate-900 dark:text-slate-100">Account Deactivated</h1>
-          <p className="text-sm font-mono opacity-70 mb-8 uppercase tracking-tight text-slate-600 dark:text-slate-400">
+          <h1 className="text-2xl font-serif italic font-bold mb-4 text-app-text">Account Deactivated</h1>
+          <p className="text-sm font-mono opacity-70 mb-8 uppercase tracking-tight text-app-text">
             Your access to the OneYatra platform has been suspended by the system administrator.
           </p>
           <Button onClick={handleLogout} className="w-full border-slate-900 dark:border-slate-700">
@@ -185,7 +185,7 @@ const AppContent = () => {
   const currentView = location.pathname.substring(1).toUpperCase().replace(/-/g, '_') || 'HOME';
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 font-sans text-gray-900 dark:text-slate-100 flex flex-col transition-colors duration-300">
+    <div className="min-h-screen bg-app-bg font-sans text-app-text flex flex-col transition-colors duration-300">
       <OfflineBanner />
       <SMSNotification />
       
@@ -217,6 +217,7 @@ const AppContent = () => {
                       origin={bookingContext?.origin || ''}
                       destination={bookingContext?.destination || ''}
                       passengersCount={searchParams?.passengers || 1}
+                      travelDate={searchParams?.date}
                       onBack={() => navigate('/results')}
                       onComplete={(bookingId?: string) => navigate(bookingId ? `/booking-success/${bookingId}` : '/my-trips')}
                     />

@@ -336,14 +336,14 @@ export const BookingPayment: React.FC<BookingPaymentProps> = ({
           </div>
         )}
 
-       <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 rounded-xl text-white shadow-xl mb-6 flex flex-col md:flex-row justify-between items-center gap-6">
+       <div className="bg-gradient-to-r from-orange-600 via-brand-500 to-amber-500 p-6 rounded-xl text-white shadow-xl mb-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex-1">
-              <div className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Amount</div>
+              <div className="text-xs opacity-70 uppercase tracking-widest mb-1">Total Amount</div>
               <div className="text-3xl font-bold flex items-center gap-3">
                   ₹{finalTotal.toLocaleString()}
-                  {discountAmount > 0 && <span className="text-sm text-green-400 line-through opacity-70">₹{subTotal.toLocaleString()}</span>}
+                  {discountAmount > 0 && <span className="text-sm text-white/60 line-through">₹{subTotal.toLocaleString()}</span>}
               </div>
-              <div className="flex gap-4 mt-2 text-[10px] text-slate-400">
+              <div className="flex gap-4 mt-2 text-[10px] opacity-70">
                   <span>Base: ₹{booking.option.price.toLocaleString()}</span>
                   {seatCost > 0 && <span>Seats: ₹{seatCost.toLocaleString()}</span>}
                   {mealCost > 0 && <span>Meals: ₹{mealCost.toLocaleString()}</span>}
@@ -353,7 +353,7 @@ export const BookingPayment: React.FC<BookingPaymentProps> = ({
               </div>
           </div>
           
-          <Button size="lg" className="w-full md:w-auto px-8 py-4 text-lg" onClick={onPay}>
+          <Button size="lg" className="w-full md:w-auto px-8 py-4 text-lg bg-white !text-orange-600 hover:bg-white/95 border-none shadow-lg font-bold" onClick={onPay}>
               {requiresApproval ? 'Submit Approval' : finalTotal === 0 ? 'Complete Booking' : `Pay ₹${finalTotal.toLocaleString()}`}
           </Button>
        </div>

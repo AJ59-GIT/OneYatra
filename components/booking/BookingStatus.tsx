@@ -108,15 +108,15 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
             </button>
         </div>
 
-        <div className="bg-brand-50 dark:bg-brand-900/20 rounded-2xl p-6 border border-brand-100 dark:border-brand-800 mb-10">
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-brand-900/10 dark:to-amber-900/10 rounded-2xl p-6 border border-brand-100 dark:border-brand-800 mb-10">
             <div className="flex items-start gap-4">
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
-                    <ExternalLink className="h-6 w-6 text-brand-600" />
+                    <ExternalLink className="h-6 w-6 text-brand-500" />
                 </div>
                 <div>
                     <h4 className="text-sm font-bold text-brand-900 dark:text-brand-300">Need a place to stay?</h4>
                     <p className="text-xs text-brand-700 dark:text-brand-400 mt-1">Get up to 20% off on hotel bookings near your destination.</p>
-                    <button className="mt-3 text-xs font-bold text-brand-600 flex items-center gap-1 hover:underline">
+                    <button className="mt-3 text-xs font-bold text-brand-500 flex items-center gap-1 hover:underline">
                         Explore Hotels <ArrowRight className="h-3 w-3" />
                     </button>
                 </div>

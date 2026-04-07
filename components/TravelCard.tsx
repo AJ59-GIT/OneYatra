@@ -45,10 +45,10 @@ export const TravelCard = ({
   const bookedCount = Math.floor(Math.random() * 50) + 5; 
 
   return (
-    <div className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm border transition-all duration-300 overflow-hidden group ${
+    <div className={`bg-white dark:bg-slate-900 rounded-3xl shadow-premium transition-all duration-300 overflow-hidden group ${
       isSelected 
-        ? 'border-brand-500 ring-2 ring-brand-200 dark:ring-brand-900/30 bg-brand-50/20 dark:bg-brand-900/10' 
-        : 'border-gray-200 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-500 hover:shadow-md'
+        ? 'border-brand-500 ring-4 ring-brand-100 dark:ring-brand-900/20 bg-brand-50/20 dark:bg-brand-900/10' 
+        : 'border-gray-100 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-500 hover:shadow-premium-hover'
     }`}>
       
       {/* Top Banner for Tags & Mood */}
@@ -107,8 +107,8 @@ export const TravelCard = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Left: Mode & Provider Info */}
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-xl flex items-center justify-center h-14 w-14 shadow-sm ${
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className={`p-2.5 sm:p-3 rounded-xl flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 shadow-sm shrink-0 ${
               option.mode === 'CAB' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400' :
               option.mode === 'AUTO' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' :
               option.mode === 'METRO' ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400' :
@@ -122,33 +122,33 @@ export const TravelCard = ({
               option.mode === 'WALK' || option.mode === 'BICYCLE' ? 'bg-lime-50 dark:bg-lime-900/20 text-lime-600 dark:text-lime-400' :
               'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' // Mixed
             }`}>
-               {option.mode === 'MIXED' ? <Split className="h-6 w-6" /> : <TransportIcon mode={option.mode} className="h-7 w-7" />}
+               {option.mode === 'MIXED' ? <Split className="h-5 w-5 sm:h-6 sm:w-6" /> : <TransportIcon mode={option.mode} className="h-6 w-6 sm:h-7 sm:w-7" />}
             </div>
-            <div>
-              <h3 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
-                {option.provider}
+            <div className="min-w-0">
+              <h3 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg flex items-center gap-1.5 sm:gap-2 truncate">
+                <span className="truncate">{option.provider}</span>
                 {/* Trust Badge */}
                 {option.rating && option.rating >= 4.5 && (
-                    <div title="Top Rated Provider">
-                        <ShieldCheck className="h-4 w-4 text-blue-500" />
+                    <div title="Top Rated Provider" className="shrink-0">
+                        <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
                     </div>
                 )}
               </h3>
               
               {/* Ratings & Reviews */}
-              <div className="flex items-center gap-2 text-xs mt-0.5">
+              <div className="flex items-center gap-2 text-[10px] sm:text-xs mt-0.5">
                  {option.rating && (
                    <button 
-                        className="font-medium text-gray-700 dark:text-slate-300 flex items-center bg-gray-50 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-gray-100 dark:border-slate-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                        className="font-medium text-gray-700 dark:text-slate-300 flex items-center bg-gray-50 dark:bg-slate-800 px-1 sm:px-1.5 py-0.5 rounded border border-gray-100 dark:border-slate-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                         onClick={(e) => { e.stopPropagation(); setShowReviewsList(true); }}
                    >
-                     <Star className="h-3 w-3 text-yellow-400 mr-1 fill-yellow-400" /> 
+                     <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-yellow-400 mr-1 fill-yellow-400" /> 
                      {option.rating} 
-                     <span className="text-gray-400 dark:text-slate-500 ml-1 underline decoration-dotted">See Reviews</span>
+                     <span className="text-gray-400 dark:text-slate-500 ml-1 underline decoration-dotted hidden sm:inline">See Reviews</span>
                    </button>
                  )}
                  <div className="text-gray-400 dark:text-slate-600">•</div>
-                 <div className="text-gray-500 dark:text-slate-400">{option.mode}</div>
+                 <div className="text-gray-500 dark:text-slate-400 truncate">{option.mode}</div>
               </div>
               
               {/* New Trust Indicators */}
@@ -186,37 +186,37 @@ export const TravelCard = ({
           </div>
 
           {/* Center: Timing & Duration */}
-          <div className="flex items-center gap-6 flex-1 justify-center md:px-8">
+          <div className="flex items-center gap-3 sm:gap-6 flex-1 justify-center md:px-4 lg:px-8">
              <div className="text-center">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">{option.departureTime}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500">{t('dep')}</div>
+                <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{option.departureTime}</div>
+                <div className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('dep')}</div>
              </div>
              
-             <div className="flex flex-col items-center w-full max-w-[120px]">
-                <div className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1 flex items-center">
-                   <Clock className="h-3 w-3 mr-1" /> {option.duration}
+             <div className="flex flex-col items-center w-full max-w-[80px] sm:max-w-[120px]">
+                <div className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-slate-400 mb-1 flex items-center whitespace-nowrap">
+                   <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" /> {option.duration}
                 </div>
                 <div className="w-full h-0.5 bg-gray-200 dark:bg-slate-800 relative">
-                   <div className="absolute left-0 rtl:right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-slate-600"></div>
-                   <div className="absolute right-0 rtl:left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-slate-600"></div>
+                   <div className="absolute left-0 rtl:right-0 top-1/2 -translate-y-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-gray-400 dark:bg-slate-600"></div>
+                   <div className="absolute right-0 rtl:left-0 top-1/2 -translate-y-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-gray-400 dark:bg-slate-600"></div>
                 </div>
                 {option.mode === 'CAB' && option.surgeMultiplier && option.surgeMultiplier > 1 && (
-                  <div className="text-[10px] font-bold text-red-500 mt-1 flex items-center bg-red-50 dark:bg-red-900/20 px-1.5 rounded">
-                     <Zap className="h-3 w-3 mr-0.5 fill-red-500" /> Surge {option.surgeMultiplier}x
+                  <div className="text-[9px] sm:text-[10px] font-bold text-red-500 mt-1 flex items-center bg-red-50 dark:bg-red-900/20 px-1 sm:px-1.5 rounded">
+                     <Zap className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 fill-red-500" /> {option.surgeMultiplier}x
                   </div>
                 )}
              </div>
 
              <div className="text-center">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">{option.arrivalTime}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500">{t('arr')}</div>
+                <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{option.arrivalTime}</div>
+                <div className="text-[10px] sm:text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('arr')}</div>
              </div>
           </div>
 
           {/* Right: Price & Action */}
-          <div className="flex items-center justify-between md:flex-col md:items-end gap-3 min-w-[120px]">
+          <div className="flex items-center justify-between md:flex-col md:items-end gap-2 sm:gap-3 min-w-[100px] sm:min-w-[120px]">
              <div className="text-right">
-               <div className="text-2xl font-bold text-gray-900 dark:text-white flex items-center justify-end">
+               <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center justify-end">
                  {formatPrice(option.price)}
                </div>
                
@@ -227,12 +227,12 @@ export const TravelCard = ({
                )}
 
                {option.ecoScore > 70 ? (
-                 <div className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center justify-end mt-0.5">
-                    <Leaf className="h-3 w-3 mr-1" /> {t('eco_friendly')}
+                 <div className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium flex items-center justify-end mt-0.5">
+                    <Leaf className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" /> {t('eco_friendly')}
                  </div>
                ) : (
-                 <div className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center justify-end mt-0.5">
-                    <Users className="h-3 w-3 mr-1" /> {bookedCount} booked today
+                 <div className="text-[9px] sm:text-[10px] text-gray-400 dark:text-slate-500 flex items-center justify-end mt-0.5">
+                    <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" /> {bookedCount} {t('booked')}
                  </div>
                )}
 
@@ -253,7 +253,7 @@ export const TravelCard = ({
              
              <Button 
                 onClick={() => onBook(option)} 
-                className={`w-full md:w-auto transition-all ${isSelected ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                className={`w-full md:w-auto text-sm sm:text-base py-2 sm:py-2.5 transition-all ${isSelected ? 'bg-green-600 hover:bg-green-700' : ''}`}
                 variant={isSelected ? 'primary' : 'primary'}
              >
                 {isSelected ? <><Check className="h-4 w-4 mr-1" /> {t('select')}</> : (actionLabel || t('book_now'))}

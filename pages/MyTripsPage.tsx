@@ -69,7 +69,6 @@ export const MyTripsPage = ({ onBack, onBookAgain }: MyTripsPageProps) => {
         await generateInvoicePDF(booking);
     } catch (error) {
         console.error("Failed to generate invoice", error);
-        alert("Failed to download invoice. Please try again.");
     }
   };
 
@@ -77,29 +76,23 @@ export const MyTripsPage = ({ onBack, onBookAgain }: MyTripsPageProps) => {
       const booking = bookings.find(b => b.id === id);
       if(!booking) return;
 
-      if(window.confirm("Are you sure you want to cancel this booking? Refunds will be credited to your wallet immediately.")) {
-          setLoading(true);
-          const success = await cancelUserBooking(id);
-          setLoading(false);
-          if (success) {
-              alert("Booking Cancelled Successfully. Check your email/SMS for details.");
-              
-              // Trigger SMS
-              const user = getCurrentUser();
-              const phone = user?.phone || '9876543210';
-              sendCancellationSMS(booking, phone);
+      setLoading(true);
+      const success = await cancelUserBooking(id);
+      setLoading(false);
+      
+      if (success) {
+          // Trigger SMS
+          const user = getCurrentUser();
+          const phone = user?.phone || '9876543210';
+          sendCancellationSMS(booking, phone);
 
-              fetchBookings(); // Refresh list
-          } else {
-              alert("Failed to cancel booking. Please contact support.");
-          }
+          fetchBookings(); // Refresh list
       }
   };
 
   const handleRateTrip = (booking: Booking) => {
       const eligibility = checkReviewEligibility(booking);
       if (!eligibility.allowed) {
-          alert(eligibility.reason);
           return;
       }
       navigate(`/review/${booking.id}`);

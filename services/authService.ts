@@ -242,10 +242,13 @@ export const checkPasswordStrength = (password: string): { score: number; messag
 
 const handleFirebaseError = (error: any): string => {
   if (error.code === 'auth/requests-from-referer-blocked') {
-    return "This domain is not authorized in Firebase. Please add this URL to 'Authorized domains' in your Firebase Console.";
+    return "This domain is not authorized in Firebase. Please add your Render URL to 'Authorized domains' in your Firebase Console (Authentication > Settings > Authorized domains).";
   }
   if (error.code === 'auth/invalid-api-key') {
     return "Invalid Firebase API Key. Please check your environment variables.";
+  }
+  if (error.code === 'auth/popup-closed-by-user') {
+    return "The login popup was closed before completion. Please ensure popups are allowed for this site and try again. If the issue persists, check if your domain is authorized in Firebase.";
   }
   return error.message || "An unexpected error occurred.";
 };

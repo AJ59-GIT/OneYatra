@@ -25,6 +25,7 @@ interface BookingPageProps {
   origin: string;
   destination: string;
   passengersCount: number;
+  travelDate?: string;
   onBack: () => void;
   onComplete: (bookingId?: string) => void;
 }
@@ -39,7 +40,7 @@ const PROMO_CODES: Record<string, { type: 'FLAT' | 'PERCENT', value: number, min
   'SUMMER20': { type: 'PERCENT', value: 20, minAmount: 2000, maxDiscount: 500 }
 };
 
-export const BookingPage = ({ option, origin, destination, passengersCount, onBack, onComplete }: BookingPageProps) => {
+export const BookingPage = ({ option, origin, destination, passengersCount, travelDate, onBack, onComplete }: BookingPageProps) => {
   // ... existing state and logic ...
   const { isB2BMode } = useSettings();
   const [step, setStep] = useState<Step>('DETAILS');
@@ -330,7 +331,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, onBa
   const handleStartPayment = (totalExtras = 0) => {
     const finalPrice = option.price + seatCost + mealCost + specialRequestCost + insuranceCost + carbonOffsetCost;
     
-    const newBooking = createBooking({ ...option, price: finalPrice }, passengers);
+    const newBooking = createBooking({ ...option, price: finalPrice }, passengers, travelDate, origin, destination);
     newBooking.selectedSeats = selectedSeats;
     newBooking.selectedMeal = selectedMeal;
     newBooking.selectedAddOns = selectedRequests;

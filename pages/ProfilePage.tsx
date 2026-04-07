@@ -313,49 +313,49 @@ export const ProfilePage = ({ onBack, onLogout }: ProfilePageProps) => {
             <nav className="p-2 space-y-1">
               <button 
                 onClick={() => setActiveTab('PERSONAL')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'PERSONAL' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'PERSONAL' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <User className="h-4 w-4" /> Personal Info
               </button>
               <button 
                 onClick={() => setActiveTab('TOOLS')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'TOOLS' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'TOOLS' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <BriefcaseIcon className="h-4 w-4" /> Travel Tools
               </button>
               <button 
                 onClick={() => setActiveTab('CO_TRAVELERS')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'CO_TRAVELERS' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'CO_TRAVELERS' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <Users className="h-4 w-4" /> Co-Travelers
               </button>
               <button 
                 onClick={() => setActiveTab('ADDRESS')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'ADDRESS' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'ADDRESS' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <MapPin className="h-4 w-4" /> Addresses
               </button>
               <button 
                 onClick={() => setActiveTab('PREFERENCES')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'PREFERENCES' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'PREFERENCES' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <Settings className="h-4 w-4" /> Preferences
               </button>
               <button 
                 onClick={() => setActiveTab('ACCESSIBILITY')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'ACCESSIBILITY' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'ACCESSIBILITY' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <Accessibility className="h-4 w-4" /> Accessibility
               </button>
               <button 
                 onClick={() => setActiveTab('SECURITY')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'SECURITY' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'SECURITY' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <Shield className="h-4 w-4" /> Security
               </button>
               <button 
                 onClick={() => setActiveTab('LEGAL')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'LEGAL' ? 'bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${activeTab === 'LEGAL' ? 'bg-brand-50 dark:bg-slate-700 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
               >
                 <Scale className="h-4 w-4" /> Safety & Legal
               </button>

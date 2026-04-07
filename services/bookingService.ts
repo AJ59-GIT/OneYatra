@@ -117,7 +117,7 @@ const generateMockBookings = (): Booking[] => {
 
 // --- Active Flow ---
 
-export const createBooking = (option: TravelOption, passengers: Passenger[]): Booking => {
+export const createBooking = (option: TravelOption, passengers: Passenger[], travelDate?: string, origin?: string, destination?: string): Booking => {
   const bookingId = `BK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   // Store context in local storage for retrieval if page refreshes or for history
   const booking: Booking = {
@@ -129,9 +129,9 @@ export const createBooking = (option: TravelOption, passengers: Passenger[]): Bo
     status: 'INITIATED',
     createdAt: Date.now(),
     // We add these for easier listing display later
-    travelDate: new Date().toISOString().split('T')[0], // Default to today if not provided in search params context (which we don't strictly have here, simplifying)
-    origin: 'Origin', // Placeholder, updated in confirm if available or passed
-    destination: 'Destination' 
+    travelDate: travelDate || new Date().toISOString().split('T')[0], 
+    origin: origin || 'Origin', 
+    destination: destination || 'Destination' 
   };
   bookingsStore[bookingId] = booking;
   return booking;

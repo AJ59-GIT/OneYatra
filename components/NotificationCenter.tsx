@@ -73,11 +73,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = () => {
   };
 
   const handleClear = () => {
-    if(window.confirm("Clear all notifications?")) {
-        clearNotifications();
-        setNotifications([]);
-        setUnreadCount(0);
-    }
+    clearNotifications();
+    setNotifications([]);
+    setUnreadCount(0);
   };
 
   const handleItemClick = (notif: AppNotification) => {

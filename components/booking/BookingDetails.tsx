@@ -56,7 +56,7 @@ export const BookingDetails: React.FC<BookingDetailsProps> = ({
                </div>
             </div>
             <div className="text-right">
-               <div className="text-xl font-bold text-brand-600">₹{option.price.toLocaleString()}</div>
+               <div className="text-xl font-bold text-brand-500">₹{option.price.toLocaleString()}</div>
                <div className="text-xs text-gray-500 dark:text-gray-400">{passengersCount} Traveller(s)</div>
             </div>
          </div>

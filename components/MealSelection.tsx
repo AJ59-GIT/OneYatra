@@ -98,22 +98,22 @@ export const MealSelection: React.FC<MealSelectionProps> = ({ passengers, onConf
   const selectedMeal = MEAL_OPTIONS.find(m => m.id === selectedMealId);
 
   return (
-    <div className="animate-in fade-in zoom-in-95 duration-300 flex flex-col h-full bg-slate-50 rounded-xl border border-gray-200 overflow-hidden">
+    <div className="animate-in fade-in zoom-in-95 duration-300 flex flex-col h-full bg-slate-50 dark:bg-slate-950 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden">
       
       {/* Header */}
-      <div className="bg-white p-4 border-b border-gray-200 shadow-sm z-10">
+      <div className="bg-gradient-to-r from-orange-600 via-brand-500 to-amber-500 p-4 border-b border-gray-200 dark:border-slate-800 shadow-sm z-10 text-white">
          <div className="flex justify-between items-center mb-4">
             <div>
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Utensils className="h-5 w-5 text-brand-600" />
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                <Utensils className="h-5 w-5 text-white" />
                 Add a Meal
                 </h2>
-                <p className="text-xs text-gray-500">Delicious meals served at your seat</p>
+                <p className="text-xs opacity-80">Delicious meals served at your seat</p>
             </div>
             {selectedMeal && (
                 <div className="text-right">
-                    <div className="text-xs text-gray-500">Total Addition</div>
-                    <div className="text-lg font-bold text-gray-900">₹{selectedMeal.price * passengers.length}</div>
+                    <div className="text-xs opacity-70">Total Addition</div>
+                    <div className="text-lg font-bold">₹{selectedMeal.price * passengers.length}</div>
                 </div>
             )}
          </div>
@@ -126,8 +126,8 @@ export const MealSelection: React.FC<MealSelectionProps> = ({ passengers, onConf
                     onClick={() => setFilter(f as any)}
                     className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${
                         filter === f 
-                        ? 'bg-brand-600 text-white border-brand-600 shadow-md' 
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                        ? 'bg-white text-brand-600 border-white shadow-md' 
+                        : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
                     }`}
                 >
                     {f === 'ALL' ? 'All Items' : f.charAt(0) + f.slice(1).toLowerCase()}

@@ -23,16 +23,16 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 touch-manipulation";
   
   const variants = {
-    primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-500/20 dark:bg-brand-600 dark:hover:bg-brand-500",
-    secondary: "bg-slate-800 text-white hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600",
-    outline: "border-2 border-brand-600 text-brand-600 hover:bg-brand-50 dark:border-brand-500 dark:text-brand-500 dark:hover:bg-brand-950",
-    ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+    primary: "bg-brand-500 text-white hover:bg-brand-600 shadow-premium active:scale-95",
+    secondary: "bg-app-text text-app-bg hover:opacity-90 shadow-premium active:scale-95",
+    outline: "border-2 border-app-border text-app-text hover:bg-app-bg active:scale-95",
+    ghost: "text-app-text opacity-70 hover:bg-app-bg active:scale-95"
   };
 
   const sizes = {
-    sm: "h-10 px-4 text-xs min-w-[80px]", // Increased touch target
-    md: "h-12 px-6 text-sm min-w-[100px]",
-    lg: "h-14 px-8 text-base min-w-[140px]"
+    sm: "h-10 px-4 text-xs rounded-xl",
+    md: "h-12 px-6 text-sm rounded-2xl",
+    lg: "h-14 px-8 text-base rounded-3xl"
   };
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {

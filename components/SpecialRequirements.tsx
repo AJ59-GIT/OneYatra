@@ -93,22 +93,22 @@ export const SpecialRequirements: React.FC<SpecialRequirementsProps> = ({ mode, 
     .reduce((sum, opt) => sum + opt.price, 0);
 
   return (
-    <div className="animate-in fade-in zoom-in-95 duration-300 flex flex-col h-full bg-slate-50 rounded-xl border border-gray-200 overflow-hidden">
+    <div className="animate-in fade-in zoom-in-95 duration-300 flex flex-col h-full bg-slate-50 dark:bg-slate-950 rounded-xl border border-gray-200 dark:border-slate-800 overflow-hidden">
       
       {/* Header */}
-      <div className="bg-white p-4 border-b border-gray-200 shadow-sm z-10">
+      <div className="bg-gradient-to-r from-orange-600 via-brand-500 to-amber-500 p-4 border-b border-gray-200 dark:border-slate-800 shadow-sm z-10 text-white">
          <div className="flex justify-between items-center">
             <div>
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-brand-600" />
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-white" />
                 Special Requirements
                 </h2>
-                <p className="text-xs text-gray-500">Customize your journey for your needs</p>
+                <p className="text-xs opacity-80">Customize your journey for your needs</p>
             </div>
             {totalCost > 0 && (
                 <div className="text-right">
-                    <div className="text-xs text-gray-500">Total Extra</div>
-                    <div className="text-lg font-bold text-gray-900">₹{totalCost}</div>
+                    <div className="text-xs opacity-70">Total Extra</div>
+                    <div className="text-lg font-bold">₹{totalCost}</div>
                 </div>
             )}
          </div>

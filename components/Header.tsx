@@ -107,11 +107,11 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
   const progress = getProgress();
 
   return (
-    <header className={`sticky top-2 z-50 mx-4 rounded-2xl backdrop-blur-xl border shadow-lg transition-all duration-300 ${isB2BMode ? 'bg-slate-900/80 text-white border-slate-800' : 'bg-white/70 dark:bg-slate-900/70 border-white/20 dark:border-slate-800/50'}`} dir={dir}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className={`sticky top-2 sm:top-4 z-50 mx-2 sm:mx-4 rounded-2xl sm:rounded-3xl backdrop-blur-2xl border shadow-premium transition-all duration-300 ${isB2BMode ? 'bg-slate-900/80 text-white border-slate-800' : 'bg-app-card/80 border-app-border/50'}`} dir={dir}>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Progress Indicator */}
         {progress > 0 && (
-          <div className="absolute top-0 left-0 w-full h-1 overflow-hidden rounded-t-2xl">
+          <div className="absolute top-0 left-0 w-full h-1 overflow-hidden rounded-t-2xl sm:rounded-t-3xl">
             <div 
               className="h-full bg-brand-500 transition-all duration-500 ease-out" 
               style={{ width: `${(progress / 3) * 100}%` }}
@@ -119,8 +119,8 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
           </div>
         )}
 
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex items-center gap-2 sm:gap-8">
             <div 
               className="flex items-center cursor-pointer group" 
               onClick={() => onNavigate(isB2BMode ? 'CORPORATE' : 'HOME')}
@@ -129,10 +129,10 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
               onKeyDown={(e) => e.key === 'Enter' && onNavigate(isB2BMode ? 'CORPORATE' : 'HOME')}
               aria-label="Go to Home"
             >
-              <div className={`p-1.5 rounded-lg mr-2 transition-transform group-hover:scale-110 ${isB2BMode ? 'bg-blue-600' : 'bg-brand-500'}`}>
-                {isB2BMode ? <Building2 className="h-5 w-5 text-white"/> : <Zap className="h-5 w-5 text-white" fill="currentColor" aria-hidden="true" />}
+              <div className={`p-1 sm:p-1.5 rounded-lg mr-1.5 sm:mr-2 transition-transform group-hover:scale-110 ${isB2BMode ? 'bg-blue-600' : 'bg-brand-500'}`}>
+                {isB2BMode ? <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-white"/> : <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="currentColor" aria-hidden="true" />}
               </div>
-              <span className={`text-xl font-bold bg-clip-text text-transparent ${isB2BMode ? 'bg-gradient-to-r from-blue-400 to-indigo-400' : 'bg-gradient-to-r from-brand-600 to-brand-500 dark:from-brand-400 dark:to-brand-600'}`}>
+              <span className={`text-lg sm:text-xl font-bold bg-clip-text text-transparent ${isB2BMode ? 'bg-gradient-to-r from-blue-400 to-indigo-400' : 'bg-gradient-to-r from-brand-600 to-brand-500 dark:from-brand-400 dark:to-brand-600'}`}>
                 {t('app_name')}
               </span>
             </div>
@@ -216,7 +216,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
                 onClick={() => onNavigate('PROFILE')}
                 className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-gray-200 group rtl:pl-1 rtl:pr-2"
               >
-                <div className={`p-1.5 rounded-full ${isB2BMode ? 'bg-blue-800 text-blue-200' : 'bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-gray-400'}`}>
+                <div className={`p-1.5 rounded-full ${isB2BMode ? 'bg-blue-800 text-blue-200' : 'bg-app-bg text-app-text opacity-70'}`}>
                   <User className="h-4 w-4" aria-hidden="true" />
                 </div>
               </button>
@@ -235,7 +235,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
       {/* Quick Edit Panel */}
       {isQuickEditOpen && (
         <div className="absolute top-full left-0 w-full p-4 animate-in slide-in-from-top-4 duration-300">
-          <div className="max-w-4xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 p-4">
+          <div className="max-w-4xl mx-auto bg-app-card rounded-2xl shadow-2xl border border-app-border p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Quick Edit Search</h3>
               <button onClick={() => setIsQuickEditOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
@@ -281,7 +281,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
       {/* Mobile Menu Content (Simplified) */}
       {isMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 w-full bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 p-4 shadow-lg flex flex-col gap-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-app-bg rounded-lg">
                   <span className="text-sm font-medium">Theme</span>
                   <button
                     onClick={toggleTheme}

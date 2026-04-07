@@ -142,7 +142,7 @@ export const BookingPassengerInfo: React.FC<BookingPassengerInfoProps> = ({
                      {(option.mode === 'FLIGHT' || option.mode === 'TRAIN' || option.mode === 'BUS') && (
                         <div className="pt-2 border-t border-gray-100 dark:border-slate-700 mt-2">
                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Government ID</label>
-                           <div className="grid grid-cols-3 gap-3">
+                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <select 
                                 value={passenger.idType || ''}
                                 onChange={(e) => updatePassenger(index, 'idType', e.target.value)}
@@ -160,7 +160,7 @@ export const BookingPassengerInfo: React.FC<BookingPassengerInfoProps> = ({
                                 value={passenger.idNumber || ''}
                                 onChange={(e) => updatePassenger(index, 'idNumber', e.target.value)}
                                 placeholder="ID Number"
-                                className={`col-span-2 ${inputClasses} ${errors[`idNumber_${index}`] ? 'border-red-500' : ''}`}
+                                className={`sm:col-span-2 ${inputClasses} ${errors[`idNumber_${index}`] ? 'border-red-500' : ''}`}
                               />
                            </div>
                            {(errors[`idType_${index}`] || errors[`idNumber_${index}`]) && (

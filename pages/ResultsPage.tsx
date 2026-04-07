@@ -363,20 +363,20 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
   // SKELETON LOADING STATE
   if (loading) {
     return (
-      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-white dark:bg-slate-950">
-         <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 py-4 z-30">
+      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-app-bg">
+         <div className="bg-app-card border-b border-app-border px-4 py-4 z-30">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 <div className="flex flex-col space-y-2">
-                    <div className="h-6 w-48 bg-gray-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                    <div className="h-4 w-32 bg-gray-100 dark:bg-slate-700 rounded animate-pulse"></div>
+                    <div className="h-6 w-48 bg-app-bg rounded animate-pulse"></div>
+                    <div className="h-4 w-32 bg-app-bg/50 rounded animate-pulse"></div>
                 </div>
             </div>
          </div>
          <div className="flex-1 flex max-w-7xl mx-auto w-full p-4 gap-6">
              <div className="hidden lg:block w-72 shrink-0 space-y-4">
-                 <div className="h-full bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
-                    <div className="h-6 w-24 bg-gray-200 dark:bg-slate-800 rounded mb-6 animate-pulse"></div>
-                    {[1,2,3,4].map(i => <div key={i} className="h-16 w-full bg-gray-100 dark:bg-slate-800 rounded mb-4 animate-pulse"></div>)}
+                 <div className="h-full bg-app-card rounded-xl border border-app-border p-4">
+                    <div className="h-6 w-24 bg-app-bg rounded mb-6 animate-pulse"></div>
+                    {[1,2,3,4].map(i => <div key={i} className="h-16 w-full bg-app-bg/50 rounded mb-4 animate-pulse"></div>)}
                  </div>
              </div>
              <div className="flex-1 space-y-4">
@@ -407,37 +407,41 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
   const discountedPrice = totalPrice * 0.95;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-hidden bg-app-bg">
       <RealTimeBookingToast />
-      <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-4 shadow-sm z-30 shrink-0">
-         <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div>
-               <div className="flex items-center gap-2">
-                 <button onClick={onBack} className="p-1 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 rtl:-mr-2 rtl:ml-0"><ArrowLeft className="h-5 w-5 rtl:rotate-180"/></button>
-                 <h1 className="text-lg font-bold text-gray-900 dark:text-white flex items-center truncate">
+      <div className="bg-app-card/90 backdrop-blur-xl border-b border-app-border px-3 sm:px-6 lg:px-8 py-2 sm:py-4 shadow-premium z-30 shrink-0">
+         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+               <div className="flex items-center gap-1 sm:gap-2">
+                 <button onClick={onBack} className="p-1.5 -ml-1.5 rounded-full hover:bg-app-bg text-app-text opacity-60 rtl:-mr-1.5 rtl:ml-0 transition-colors active:scale-90" aria-label="Go back"><ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 rtl:rotate-180"/></button>
+                 <h1 className="text-sm sm:text-base md:text-lg font-bold text-app-text flex items-center truncate">
                     {isRoundTrip ? (
-                       <>{data.origin} <Repeat className="h-4 w-4 mx-1.5 text-brand-500"/> {data.destination}</>
+                       <span className="flex items-center truncate">
+                        <span className="truncate max-w-[80px] sm:max-w-none">{data.origin}</span>
+                        <Repeat className="h-3 w-3 sm:h-4 sm:w-4 mx-1 sm:mx-2 text-brand-500 shrink-0"/>
+                        <span className="truncate max-w-[80px] sm:max-w-none">{data.destination}</span>
+                       </span>
                     ) : (
-                       searchParams.tripType === 'MULTI_CITY' ? 'Multi-City Trip' : `${data.origin} ${t('label_to')} ${data.destination}`
+                       searchParams.tripType === 'MULTI_CITY' ? 'Multi-City Trip' : <span className="truncate">{data.origin} {t('label_to')} {data.destination}</span>
                     )}
                  </h1>
                </div>
-               <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 ml-8 rtl:mr-8 rtl:ml-0 flex items-center gap-2">
-                  <span>{formatDate(data.date)}</span>
-                  <span>•</span>
-                  <span>{searchParams.passengers} {t('label_passengers')}</span>
+               <div className="text-[10px] sm:text-xs text-app-text opacity-50 mt-0.5 ml-7 sm:ml-9 rtl:mr-7 sm:rtl:mr-9 rtl:ml-0 flex items-center gap-1.5 sm:gap-2">
+                  <span className="whitespace-nowrap">{formatDate(data.date)}</span>
+                  <span className="opacity-30">•</span>
+                  <span className="whitespace-nowrap">{searchParams.passengers} {t('label_passengers')}</span>
                </div>
             </div>
-            <div className="flex items-center gap-2">
-               <button onClick={handleShare} className="p-2 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors border border-gray-200 dark:border-slate-700"><Share2 className="h-5 w-5" /></button>
-               <button onClick={() => setShowMobileFilters(true)} className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 relative"><Filter className="h-5 w-5" /><span className="absolute -top-1 -right-1 w-3 h-3 bg-brand-500 rounded-full border border-white dark:border-slate-900"></span></button>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+               <button onClick={handleShare} className="p-1.5 sm:p-2.5 rounded-xl bg-app-card text-app-text hover:bg-app-card/80 transition-all border border-app-border shadow-sm active:scale-95" aria-label="Share trip"><Share2 className="h-4 w-4 sm:h-5 sm:w-5" /></button>
+               <button onClick={() => setShowMobileFilters(true)} className="lg:hidden p-1.5 sm:p-2.5 rounded-xl bg-app-card text-app-text relative border border-app-border shadow-sm active:scale-95" aria-label="Filters"><Filter className="h-4 w-4 sm:h-5 sm:w-5" /><span className="absolute top-1 right-1 w-2 h-2 bg-brand-500 rounded-full border border-app-card"></span></button>
             </div>
          </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden relative max-w-7xl mx-auto w-full">
-         <div className="hidden lg:block w-72 shrink-0 h-full border-r border-gray-200 dark:border-slate-800 overflow-y-auto custom-scrollbar rtl:border-l rtl:border-r-0">
-            <div className="p-4 border-b border-gray-200 dark:border-slate-800">
+         <div className="hidden lg:block w-72 shrink-0 h-full border-r border-app-border overflow-y-auto custom-scrollbar rtl:border-l rtl:border-r-0">
+            <div className="p-4 border-b border-app-border">
                <WeatherWidget city={destinationCity} date={travelDate} />
             </div>
             <FilterSidebar filters={filters} onChange={setFilters} minPrice={filterConstraints.minPrice} maxPrice={filterConstraints.maxPrice} maxDurationLimit={filterConstraints.maxDuration} availableProviders={filterConstraints.providers} onClose={() => {}} resultsCount={processedOptions.length} />
@@ -445,9 +449,9 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
 
          {showMobileFilters && (
             <div className="absolute inset-0 z-50 lg:hidden flex">
-               <div className="w-full h-full bg-white dark:bg-slate-900 animate-in slide-in-from-right duration-300 overflow-y-auto">
-                  <div className="p-4 border-b border-gray-200 dark:border-slate-800">
-                     <h3 className="font-bold text-lg mb-4 dark:text-white">Destination Info</h3>
+               <div className="w-full h-full bg-app-card animate-in slide-in-from-right duration-300 overflow-y-auto">
+                  <div className="p-4 border-b border-app-border">
+                     <h3 className="font-bold text-lg mb-4 text-app-text">Destination Info</h3>
                      <WeatherWidget city={destinationCity} date={travelDate} />
                   </div>
                   <FilterSidebar filters={filters} onChange={setFilters} minPrice={filterConstraints.minPrice} maxPrice={filterConstraints.maxPrice} maxDurationLimit={filterConstraints.maxDuration} availableProviders={filterConstraints.providers} onClose={() => setShowMobileFilters(false)} resultsCount={processedOptions.length} />
@@ -455,26 +459,26 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
             </div>
          )}
 
-         <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 pb-32">
+         <div className="flex-1 overflow-y-auto custom-scrollbar bg-app-bg p-3 sm:p-6 lg:p-8 pb-32">
             {isRoundTrip && (
-               <div className="flex items-center justify-center mb-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-1 rounded-xl max-w-lg mx-auto shadow-sm">
-                  <button onClick={() => setRoundTripTab('OUTBOUND')} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${roundTripTab === 'OUTBOUND' ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}>{t('label_from')} {data.origin}</button>
-                  <button onClick={() => setRoundTripTab('RETURN')} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${roundTripTab === 'RETURN' ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}>{t('label_return')}</button>
+               <div className="flex items-center justify-center mb-4 sm:mb-6 bg-app-card border border-app-border p-1 rounded-xl max-w-lg mx-auto shadow-sm sticky top-0 z-20">
+                  <button onClick={() => setRoundTripTab('OUTBOUND')} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${roundTripTab === 'OUTBOUND' ? 'bg-brand-500/10 text-brand-500 shadow-sm' : 'text-app-text opacity-50 hover:opacity-100'}`}>{t('label_from')} {data.origin}</button>
+                  <button onClick={() => setRoundTripTab('RETURN')} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${roundTripTab === 'RETURN' ? 'bg-brand-500/10 text-brand-500 shadow-sm' : 'text-app-text opacity-50 hover:opacity-100'}`}>{t('label_return')}</button>
                </div>
             )}
 
-            <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-3 sm:pb-4 no-scrollbar mb-2 sm:mb-4">
               {['ALL', 'CHEAPEST', 'FASTEST', 'ECO'].map(f => (
-                <button key={f} onClick={() => setActiveSort(f as any)} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all capitalize border ${activeSort === f ? 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-500/20' : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700'}`}>{t(f.toLowerCase())}</button>
+                <button key={f} onClick={() => setActiveSort(f as any)} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all capitalize border ${activeSort === f ? 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-500/20' : 'bg-app-card text-app-text opacity-70 border-app-border hover:border-brand-500/50'}`}>{t(f.toLowerCase())}</button>
               ))}
             </div>
 
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 p-3 rounded-lg flex gap-3 mb-6 items-start">
-               <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-               <p className="text-xs text-indigo-800 dark:text-indigo-200 leading-relaxed">{data.aiInsight}</p>
+            <div className="bg-indigo-500/10 border border-indigo-500/20 p-2.5 sm:p-3 rounded-xl flex gap-2.5 sm:gap-3 mb-4 sm:mb-6 items-start">
+               <Sparkles className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+               <p className="text-xs text-app-text opacity-80 leading-relaxed">{data.aiInsight}</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
                {processedOptions.length === 0 ? (
                   <EmptyState icon={Filter} title="No results found" description="Try adjusting your filters to see more options." actionLabel="Reset Filters" onAction={() => setFilters({ departureTime: [], arrivalMaxHour: 24, priceRange: [filterConstraints.minPrice, filterConstraints.maxPrice], providers: [], amenities: [], stops: [], maxDuration: filterConstraints.maxDuration, minRating: 0, moods: [] })} />
                ) : (
@@ -489,24 +493,24 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
       </div>
 
       {isRoundTrip && (selectedOutbound || selectedReturn) && (
-        <div className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 shadow-2xl p-4 z-40 shrink-0">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-app-card border-t border-app-border shadow-2xl p-4 z-40 shrink-0">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
              <div className="flex-1 w-full md:w-auto flex justify-between md:justify-start gap-8">
-               <div className={selectedOutbound ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-600'}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">{t('tab_one_way')}</div>
+               <div className={selectedOutbound ? 'text-app-text' : 'text-app-text opacity-40'}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-app-text opacity-50">{t('tab_one_way')}</div>
                   <div className="font-bold text-sm">{selectedOutbound ? formatPrice(selectedOutbound.price) : 'Select option'}</div>
                </div>
-               <div className="text-gray-300 dark:text-slate-700 hidden md:block">|</div>
-               <div className={selectedReturn ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-600'}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">{t('label_return')}</div>
+               <div className="text-app-border hidden md:block">|</div>
+               <div className={selectedReturn ? 'text-app-text' : 'text-app-text opacity-40'}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-app-text opacity-50">{t('label_return')}</div>
                   <div className="font-bold text-sm">{selectedReturn ? formatPrice(selectedReturn.price) : 'Select option'}</div>
                </div>
              </div>
              <div className="flex items-center gap-6 w-full md:w-auto">
                 {selectedOutbound && selectedReturn && (
                   <div className="text-right">
-                    <div className="text-[10px] text-brand-600 dark:text-brand-400 font-bold bg-brand-50 dark:bg-brand-900/20 px-2 rounded inline-block">5% Discount Applied</div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(Math.round(discountedPrice))}</div>
+                    <div className="text-[10px] text-brand-500 font-bold bg-brand-500/10 px-2 rounded inline-block">5% Discount Applied</div>
+                    <div className="text-lg font-bold text-app-text">{formatPrice(Math.round(discountedPrice))}</div>
                   </div>
                 )}
                 <Button disabled={!selectedOutbound || !selectedReturn} onClick={handleRoundTripCheckout} className="w-full md:w-auto">Book Trip</Button>
@@ -517,12 +521,12 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
 
       {isDeepLinkModalOpen && pendingDeepLinkOption && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm p-8 transform scale-100 animate-in zoom-in-95 duration-200 text-center">
-            <div className="w-16 h-16 bg-brand-50 dark:bg-brand-900/20 rounded-full flex items-center justify-center mx-auto mb-6"><ExternalLink className="h-8 w-8 text-brand-600 dark:text-brand-400" /></div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Redirecting to {pendingDeepLinkOption.provider}</h3>
-            <p className="text-sm text-gray-500 dark:text-slate-400 mb-8">We are taking you to the {pendingDeepLinkOption.provider} app to complete your booking. If the app isn't installed, we'll use their secure website.</p>
+          <div className="bg-app-card rounded-2xl shadow-2xl w-full max-w-sm p-8 transform scale-100 animate-in zoom-in-95 duration-200 text-center border border-app-border">
+            <div className="w-16 h-16 bg-brand-500/10 rounded-full flex items-center justify-center mx-auto mb-6"><ExternalLink className="h-8 w-8 text-brand-500" /></div>
+            <h3 className="text-xl font-bold text-app-text mb-2">Redirecting to {pendingDeepLinkOption.provider}</h3>
+            <p className="text-sm text-app-text opacity-60 mb-8">We are taking you to the {pendingDeepLinkOption.provider} app to complete your booking. If the app isn't installed, we'll use their secure website.</p>
             <div className="flex gap-3">
-               <button onClick={() => { setIsDeepLinkModalOpen(false); setPendingDeepLinkOption(null); }} className="flex-1 py-3 text-sm font-bold text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl transition-colors">Cancel</button>
+               <button onClick={() => { setIsDeepLinkModalOpen(false); setPendingDeepLinkOption(null); }} className="flex-1 py-3 text-sm font-bold text-app-text opacity-50 hover:bg-app-bg rounded-xl transition-colors">Cancel</button>
                <Button onClick={confirmDeepLink} className="flex-[2] rounded-xl shadow-lg shadow-brand-500/30">Continue</Button>
             </div>
           </div>
@@ -531,17 +535,17 @@ export const ResultsPage = ({ searchParams, onBack, onBookOption }: ResultsPageP
 
       {isShareModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm p-6 transform scale-100 animate-in zoom-in-95 duration-200">
+          <div className="bg-app-card rounded-xl shadow-2xl w-full max-w-sm p-6 transform scale-100 animate-in zoom-in-95 duration-200 border border-app-border">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Share Trip</h3>
-              <button onClick={() => setIsShareModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"><X className="h-5 w-5" /></button>
+              <h3 className="text-lg font-bold text-app-text">Share Trip</h3>
+              <button onClick={() => setIsShareModalOpen(false)} className="text-app-text opacity-50 hover:opacity-100"><X className="h-5 w-5" /></button>
             </div>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4 bg-gray-50 dark:bg-slate-900/50 p-3 rounded-lg border border-gray-100 dark:border-slate-700">{shareData.text}</p>
+            <p className="text-sm text-app-text opacity-70 mb-4 bg-app-bg p-3 rounded-lg border border-app-border">{shareData.text}</p>
             <div className="grid grid-cols-2 gap-3 mb-4">
-               <a href={`https://wa.me/?text=${encodeURIComponent(shareData.text + ' ' + shareData.url)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 border border-green-200 dark:border-green-900/30 transition-colors"><div className="font-bold text-sm">WhatsApp</div></a>
-               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(shareData.url)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-900/30 transition-colors"><Twitter className="h-5 w-5 mb-1" /><span className="text-xs font-bold">Twitter</span></a>
-               <a href={`mailto:?subject=${encodeURIComponent(shareData.title)}&body=${encodeURIComponent(shareData.text + '\n\n' + shareData.url)}`} className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 dark:bg-slate-900/50 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-900/70 border border-gray-200 dark:border-slate-700 transition-colors"><Mail className="h-5 w-5 mb-1" /><span className="text-xs font-bold">Email</span></a>
-               <button onClick={copyToClipboard} className="flex flex-col items-center justify-center p-3 rounded-lg bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900/40 border border-brand-200 dark:border-brand-900/30 transition-colors relative">{linkCopied ? <Check className="h-5 w-5 mb-1" /> : <Copy className="h-5 w-5 mb-1" />}<span className="text-xs font-bold">{linkCopied ? 'Copied' : 'Copy Link'}</span></button>
+               <a href={`https://wa.me/?text=${encodeURIComponent(shareData.text + ' ' + shareData.url)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20 transition-colors"><div className="font-bold text-sm">WhatsApp</div></a>
+               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(shareData.url)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20 transition-colors"><Twitter className="h-5 w-5 mb-1" /><span className="text-xs font-bold">Twitter</span></a>
+               <a href={`mailto:?subject=${encodeURIComponent(shareData.title)}&body=${encodeURIComponent(shareData.text + '\n\n' + shareData.url)}`} className="flex flex-col items-center justify-center p-3 rounded-lg bg-app-bg text-app-text opacity-70 hover:opacity-100 border border-app-border transition-colors"><Mail className="h-5 w-5 mb-1" /><span className="text-xs font-bold">Email</span></a>
+               <button onClick={copyToClipboard} className="flex flex-col items-center justify-center p-3 rounded-lg bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 border border-brand-500/20 transition-colors relative">{linkCopied ? <Check className="h-5 w-5 mb-1" /> : <Copy className="h-5 w-5 mb-1" />}<span className="text-xs font-bold">{linkCopied ? 'Copied' : 'Copy Link'}</span></button>
             </div>
           </div>
         </div>

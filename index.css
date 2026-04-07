@@ -2,18 +2,30 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   
-  --color-brand-50: rgb(var(--color-brand-50) / <alpha-value>);
-  --color-brand-100: rgb(var(--color-brand-100) / <alpha-value>);
-  --color-brand-200: rgb(var(--color-brand-200) / <alpha-value>);
-  --color-brand-300: rgb(var(--color-brand-300) / <alpha-value>);
-  --color-brand-400: rgb(var(--color-brand-400) / <alpha-value>);
-  --color-brand-500: rgb(var(--color-brand-500) / <alpha-value>);
-  --color-brand-600: rgb(var(--color-brand-600) / <alpha-value>);
-  --color-brand-700: rgb(var(--color-brand-700) / <alpha-value>);
-  --color-brand-800: rgb(var(--color-brand-800) / <alpha-value>);
-  --color-brand-900: rgb(var(--color-brand-900) / <alpha-value>);
+  /* Theme Mappings */
+  --color-app-bg: var(--bg-main);
+  --color-app-text: var(--text-main);
+  --color-app-card: var(--card-bg);
+  --color-app-border: var(--border-main);
+
+  /* Brand Colors */
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316; /* Primary CTA */
+  --color-brand-600: #ea580c; /* Hover CTA */
+  --color-brand-700: #c2410c;
+  --color-brand-800: #9a3412;
+  --color-brand-900: #7c2d12;
+
+  /* Accent Colors */
+  --color-accent-blue: #3b82f6;
+  --color-eco-emerald: #10b981;
+  --color-highlight-amber: #f59e0b;
 
   --breakpoint-xs: 480px;
 
@@ -22,87 +34,104 @@
     100% { background-position: 1000px 0; }
   }
   --animate-shimmer: shimmer 1.5s infinite linear;
+
+  @keyframes slow-zoom {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+  }
+  --animate-slow-zoom: slow-zoom 20s ease-in-out infinite alternate;
+
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  --animate-blob: blob 7s infinite;
 }
 
 :root {
-  --color-brand-50: 255 247 237;  /* #fff7ed */
-  --color-brand-100: 255 237 213; /* #ffedd5 */
-  --color-brand-200: 254 215 170; /* #fed7aa */
-  --color-brand-300: 253 186 116; /* #fdba74 */
-  --color-brand-400: 251 146 60;  /* #fb923c */
-  --color-brand-500: 249 115 22;  /* #f97316 */
-  --color-brand-600: 234 88 12;   /* #ea580c */
-  --color-brand-700: 194 65 12;   /* #c2410c */
-  --color-brand-800: 154 52 18;   /* #9a3412 */
-  --color-brand-900: 124 45 18;   /* #7c2d12 */
+  --bg-main: #f8fafc;
+  --text-main: #0f172a;
+  --card-bg: #ffffff;
+  --border-main: #e2e8f0;
 }
 
-body {
-  background-color: #f8fafc;
-  color: #0f172a;
-  /* Prevent pull-to-refresh on mobile to allow custom implementation */
-  overscroll-behavior-y: none;
-}
-.dark body {
-  background-color: #0f172a;
-  color: #f1f5f9;
+.dark {
+  --bg-main: #020617;
+  --text-main: #e2e8f0;
+  --card-bg: #0f172a;
+  --border-main: #1e293b;
 }
 
-/* Global Dark Mode Text Adjustments - Ensures font color adjusts according to the theme automatically */
-.dark .text-gray-900 {
-  color: #f8fafc !important; /* slate-50 */
-}
-.dark .text-gray-800 {
-  color: #f1f5f9 !important; /* slate-100 */
-}
-.dark .text-gray-700 {
-  color: #e2e8f0 !important; /* slate-200 */
-}
-.dark .text-gray-600 {
-  color: #cbd5e1 !important; /* slate-300 */
-}
-.dark .text-gray-500 {
-  color: #cbd5e1 !important; /* slate-300 */
-}
-.dark .text-gray-400 {
-  color: #94a3b8 !important; /* slate-400 */
+@utility hero-gradient {
+  background: linear-gradient(90deg, #ea580c, #f97316, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.dark .text-slate-900 {
-  color: #f8fafc !important;
-}
-.dark .text-slate-800 {
-  color: #f1f5f9 !important;
-}
-.dark .text-slate-700 {
-  color: #e2e8f0 !important;
-}
-.dark .text-slate-600 {
-  color: #cbd5e1 !important;
-}
-.dark .text-slate-500 {
-  color: #cbd5e1 !important; /* slate-300 */
-}
-.dark .text-slate-400 {
-  color: #94a3b8 !important; /* slate-400 */
+@layer base {
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    @apply transition-colors duration-300;
+    overscroll-behavior-y: none;
+  }
 }
 
-/* Global Dark Mode Background & Border Adjustments */
-.dark .bg-white {
-  background-color: #0f172a !important; /* slate-900 */
+/* Dark Mode Glow Effects */
+.dark body::before {
+  content: "";
+  position: fixed;
+  top: -10%;
+  left: -10%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+  z-index: -1;
+  pointer-events: none;
 }
-.dark .bg-gray-50, .dark .bg-slate-50 {
-  background-color: #1e293b !important; /* slate-800 */
+
+.dark body::after {
+  content: "";
+  position: fixed;
+  bottom: -10%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  z-index: -1;
+  pointer-events: none;
 }
-.dark .bg-gray-100, .dark .bg-slate-100 {
-  background-color: #334155 !important; /* slate-700 */
+
+/* Global Theme Overrides */
+.bg-card {
+  background-color: var(--card-bg);
 }
-.dark .border-gray-100,
-.dark .border-gray-200,
-.dark .border-gray-300,
-.dark .border-slate-100,
-.dark .border-slate-200 {
-  border-color: #334155 !important; /* slate-700 */
+
+.text-main {
+  color: var(--text-main);
+}
+
+.border-main {
+  border-color: var(--border-main);
+}
+
+/* Premium Shadows */
+.shadow-premium {
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.1);
+}
+
+.dark .shadow-premium {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px -5px rgba(59, 130, 246, 0.1);
+}
+
+.shadow-premium-hover {
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.2);
+}
+
+.dark .shadow-premium-hover {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(59, 130, 246, 0.2);
 }
 
 /* Custom scrollbar for webkit */
@@ -127,6 +156,17 @@ body {
 }
 .animate-slide-up {
   animation: slide-up 0.3s ease-out forwards;
+}
+
+@utility animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Shimmer Effect for Skeletons */
@@ -201,10 +241,10 @@ body {
 
 /* High Contrast Element Overrides */
 .high-contrast * {
-  background-image: none !important;
-  font-weight: 700 !important; /* Bold text */
-  box-shadow: none !important;
-  text-shadow: none !important;
+  background-image: none;
+  font-weight: 700; /* Bold text */
+  box-shadow: none;
+  text-shadow: none;
 }
 
 /* Ensure borders are visible and thick */
@@ -217,19 +257,19 @@ body {
 .high-contrast textarea,
 .high-contrast select,
 .high-contrast button {
-  border-width: 2px !important;
-  border-style: solid !important;
-  border-color: currentColor !important;
+  border-width: 2px;
+  border-style: solid;
+  border-color: currentColor;
 }
 
 /* Specific component visibility adjustments for HC */
 .high-contrast .bg-white {
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  background-color: #ffffff;
+  color: #000000;
 }
 .high-contrast.dark .bg-white {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+  background-color: #000000;
+  color: #ffffff;
 }
 
 .high-contrast .bg-slate-50, 
@@ -239,43 +279,43 @@ body {
 .high-contrast .bg-blue-50,
 .high-contrast .bg-green-50,
 .high-contrast .bg-red-50 {
-  background-color: transparent !important;
-  border: 2px solid currentColor !important;
+  background-color: transparent;
+  border: 2px solid currentColor;
 }
 
 /* Improve button contrast in HC */
 .high-contrast button.bg-brand-600,
 .high-contrast .bg-brand-600 {
-  background-color: rgb(var(--color-brand-600)) !important;
-  color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  background-color: rgb(var(--color-brand-600));
+  color: #ffffff;
+  border: 2px solid #000000;
 }
 .high-contrast.dark button.bg-brand-600,
 .high-contrast.dark .bg-brand-600 {
-  background-color: rgb(var(--color-brand-500)) !important;
-  color: #000000 !important;
-  border: 2px solid #ffffff !important;
+  background-color: rgb(var(--color-brand-500));
+  color: #000000;
+  border: 2px solid #ffffff;
 }
 
 /* Fix text contrast on colored backgrounds */
 .high-contrast .text-white {
-  color: #ffffff !important;
+  color: #ffffff;
 }
 .high-contrast.dark .text-white {
-  color: #000000 !important; /* In dark HC, bg might be white/light */
+  color: #000000; /* In dark HC, bg might be white/light */
 }
 
 /* Links */
 .high-contrast a,
 .high-contrast button.text-brand-600,
 .high-contrast .text-brand-600 {
-  text-decoration: underline !important;
-  color: #0000EE !important;
+  text-decoration: underline;
+  color: #0000EE;
 }
 .high-contrast.dark a,
 .high-contrast.dark button.text-brand-600,
 .high-contrast.dark .text-brand-600 {
-  color: #FFFF00 !important; /* Yellow on Black for links */
+  color: #FFFF00; /* Yellow on Black for links */
 }
 
 /* Patterns for color independence in HC */
@@ -286,9 +326,9 @@ body {
     transparent 5px,
     currentColor 5px,
     currentColor 7px
-  ) !important;
+  );
 }
 .high-contrast .pattern-dots {
-  background: radial-gradient(currentColor 20%, transparent 20%) !important;
-  background-size: 8px 8px !important;
+  background: radial-gradient(currentColor 20%, transparent 20%);
+  background-size: 8px 8px;
 }

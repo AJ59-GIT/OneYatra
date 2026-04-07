@@ -39,7 +39,7 @@ export const BookingInsurance: React.FC<BookingInsuranceProps> = ({
                </div>
             </div>
             <div className="text-right">
-               <div className="text-xl font-bold text-brand-600">₹{option.price.toLocaleString()}</div>
+               <div className="text-xl font-bold text-brand-500">₹{option.price.toLocaleString()}</div>
                <div className="text-xs text-gray-500 dark:text-gray-400">{passengersCount} Traveller(s)</div>
             </div>
          </div>
@@ -63,18 +63,18 @@ export const BookingInsurance: React.FC<BookingInsuranceProps> = ({
          </div>
 
          <div 
-            className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${carbonOffset ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700'}`}
+            className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${carbonOffset ? 'bg-eco-50 dark:bg-eco-900/20 border-eco-500' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700'}`}
             onClick={() => setCarbonOffset(!carbonOffset)}
          >
             <div className="flex justify-between items-start mb-2">
-               <Leaf className={`h-6 w-6 ${carbonOffset ? 'text-emerald-600' : 'text-gray-400'}`} />
-               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${carbonOffset ? 'bg-emerald-600 border-emerald-600' : 'border-gray-300'}`}>
+               <Leaf className={`h-6 w-6 ${carbonOffset ? 'text-eco-500' : 'text-gray-400'}`} />
+               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${carbonOffset ? 'bg-eco-500 border-eco-500' : 'border-gray-300'}`}>
                   {carbonOffset && <Check className="h-3 w-3 text-white" />}
                </div>
             </div>
             <h3 className="font-bold text-sm text-gray-900 dark:text-white">Carbon Offset</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Neutralize your carbon footprint by supporting green projects.</p>
-            <div className="mt-2 text-sm font-bold text-emerald-600">₹49 / trip</div>
+            <div className="mt-2 text-sm font-bold text-eco-500">₹49 / trip</div>
          </div>
       </div>
 

@@ -536,7 +536,7 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-900 flex transition-colors duration-300">
+    <div className="min-h-screen bg-app-bg flex transition-colors duration-300 text-app-text">
       {/* Left Side - Visuals (Hidden on small mobile) */}
       <div className="hidden lg:flex lg:w-1/2 bg-slate-900 text-white relative overflow-hidden flex-col justify-between p-12">
         <div className="z-10">
@@ -548,7 +548,7 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
           </div>
           <h1 className="text-5xl font-extrabold leading-tight mb-6">
             The Super App for <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-orange-300">
+            <span className="hero-gradient bg-clip-text text-transparent">
               Indian Mobility.
             </span>
           </h1>
@@ -565,7 +565,7 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                className={`transition-all duration-700 transform ${idx === currentSlide ? 'opacity-100 translate-x-0' : 'opacity-30 translate-x-10 hidden'}`}
              >
                 <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 max-w-md">
-                   {slide.title}
+                   <div className="font-bold text-lg">{slide.title}</div>
                    <p className="text-slate-300 text-sm mt-2">{slide.desc}</p>
                 </div>
              </div>
@@ -581,7 +581,7 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       {/* Right Side - Interaction */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 sm:px-12 lg:px-24 relative py-12 lg:py-0">
          {step === 'SLIDES' && (
-           <div className="block lg:hidden absolute top-0 left-0 right-0 h-1/2 bg-slate-50 dark:bg-slate-800 -z-10"></div>
+           <div className="block lg:hidden absolute top-0 left-0 right-0 h-1/2 bg-app-card -z-10"></div>
          )}
 
          {/* Mobile Header (Only visible on Step 1 mobile) */}
@@ -591,7 +591,7 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                  <Sparkles className="h-8 w-8 text-white" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">OneYatra</h2>
+            <h2 className="text-2xl font-bold text-app-text">OneYatra</h2>
          </div>
 
          <div className="max-w-sm mx-auto w-full">
