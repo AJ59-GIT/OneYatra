@@ -258,6 +258,25 @@ async function startServer() {
     }
   });
 
+  app.post("/api/send-email", async (req, res) => {
+    try {
+      const { ticket_id } = req.body;
+      console.log(`[API] Sending email for ticket: ${ticket_id}`);
+      
+      // Simulate email sending delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      if (!ticket_id) {
+        return res.status(400).json({ error: "Ticket ID is required" });
+      }
+
+      res.json({ success: true, message: `Email sent successfully for ticket ${ticket_id}` });
+    } catch (error) {
+      console.error("Server /api/send-email Error:", error);
+      res.status(500).json({ error: "Failed to send email" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

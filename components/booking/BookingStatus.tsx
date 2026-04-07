@@ -1,7 +1,9 @@
-import React from 'react';
-import { CheckCircle, XCircle, Loader2, Printer, Download, Mail, ExternalLink, Ticket, QrCode, Calendar, MapPin, Users, CreditCard, ShieldCheck, ArrowRight, Share2, Building2 } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { CheckCircle, XCircle, Loader2, Printer, Download, Mail, ExternalLink, Ticket, QrCode, Calendar, MapPin, Users, CreditCard, ShieldCheck, ArrowRight, Share2, Building2, AlertCircle, Check } from 'lucide-react';
 import { Booking } from '../../types';
 import { Button } from '../Button';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 interface BookingStatusProps {
   step: 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'PENDING_APPROVAL';
@@ -11,6 +13,70 @@ interface BookingStatusProps {
 }
 
 export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, processingStatus, onComplete }) => {
+  const ticketRef = useRef<HTMLDivElement>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handlePrint = () => {
+    try {
+      window.print();
+    } catch (error) {
+      console.error('Print failed:', error);
+      showToast('Failed to open print dialog', 'error');
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!ticketRef.current) return;
+
+    const element = ticketRef.current;
+    const opt = {
+      margin: 10,
+      filename: `OneYatra_Ticket_${booking?.id || 'booking'}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+    };
+
+    try {
+      html2pdf().set(opt).from(element).save();
+      showToast('PDF download started', 'success');
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      showToast('Failed to generate PDF', 'error');
+    }
+  };
+
+  const handleEmail = async () => {
+    if (!booking) return;
+    
+    setEmailLoading(true);
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: booking.id })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        showToast('Ticket sent to your email!', 'success');
+      } else {
+        throw new Error(data.error || 'Failed to send email');
+      }
+    } catch (error: any) {
+      console.error('Email failed:', error);
+      showToast(error.message || 'Failed to send email', 'error');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   if (step === 'PROCESSING') {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in-95">
@@ -41,8 +107,18 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
 
   if (step === 'CONFIRMED' && booking) {
     return (
-      <div className="animate-in fade-in zoom-in-95 duration-500">
-        <div className="text-center mb-10">
+      <div className="animate-in fade-in zoom-in-95 duration-500 relative">
+        {/* Toast Notification */}
+        {toast && (
+          <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl animate-in slide-in-from-top duration-300 ${
+            toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+          }`}>
+            {toast.type === 'success' ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+            <span className="text-sm font-bold">{toast.message}</span>
+          </div>
+        )}
+
+        <div className="text-center mb-10 no-print">
           <div className="inline-flex items-center justify-center w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full mb-6 relative">
             <CheckCircle className="h-12 w-12 text-green-600" />
             <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-900 p-1 rounded-full shadow-sm">
@@ -53,54 +129,66 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
           <p className="text-gray-500 dark:text-gray-400">Your trip has been successfully booked. Reference: <span className="font-mono font-bold text-gray-900 dark:text-white select-all">{booking.id}</span></p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Ticket className="h-4 w-4 text-brand-600" />
-                    Trip Details
-                </h3>
-                <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                        <MapPin className="h-4 w-4 text-gray-400 mt-1" />
-                        <div>
-                            <p className="text-xs text-gray-500">Route</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{booking.origin} <ArrowRight className="inline h-3 w-3 mx-1" /> {booking.destination}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                        <Calendar className="h-4 w-4 text-gray-400 mt-1" />
-                        <div>
-                            <p className="text-xs text-gray-500">Date & Time</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{booking.travelDate} at {booking.option.departureTime}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                        <Users className="h-4 w-4 text-gray-400 mt-1" />
-                        <div>
-                            <p className="text-xs text-gray-500">Passengers</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{booking.passengers.length} Traveler(s)</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div ref={ticketRef} className="printable-ticket">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-brand-600" />
+                      Trip Details
+                  </h3>
+                  <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                          <MapPin className="h-4 w-4 text-gray-400 mt-1" />
+                          <div>
+                              <p className="text-xs text-gray-500">Route</p>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">{booking.origin} <ArrowRight className="inline h-3 w-3 mx-1" /> {booking.destination}</p>
+                          </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                          <Calendar className="h-4 w-4 text-gray-400 mt-1" />
+                          <div>
+                              <p className="text-xs text-gray-500">Date & Time</p>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">{booking.travelDate} at {booking.option.departureTime}</p>
+                          </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                          <Users className="h-4 w-4 text-gray-400 mt-1" />
+                          <div>
+                              <p className="text-xs text-gray-500">Passengers</p>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">{booking.passengers.length} Traveler(s)</p>
+                          </div>
+                      </div>
+                  </div>
+              </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                <div className="p-3 bg-gray-50 dark:bg-slate-900 rounded-xl mb-4">
-                    <QrCode className="h-24 w-24 text-gray-900 dark:text-white opacity-80" />
-                </div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Digital Ticket QR</p>
-                <p className="text-[10px] text-gray-400 mt-1">Scan at terminal for entry</p>
-            </div>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm flex flex-col items-center justify-center text-center">
+                  <div className="p-3 bg-gray-50 dark:bg-slate-900 rounded-xl mb-4">
+                      <QrCode className="h-24 w-24 text-gray-900 dark:text-white opacity-80" />
+                  </div>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Digital Ticket QR</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Scan at terminal for entry</p>
+              </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-10">
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors">
+        <div className="flex flex-wrap gap-3 mb-10 no-print">
+            <button 
+              onClick={handleDownloadPDF}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors"
+            >
                 <Download className="h-4 w-4" /> E-Ticket
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors">
-                <Mail className="h-4 w-4" /> Email
+            <button 
+              onClick={handleEmail}
+              disabled={emailLoading}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+            >
+                {emailLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Email
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors">
+            <button 
+              onClick={handlePrint}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors"
+            >
                 <Printer className="h-4 w-4" /> Print
             </button>
             <button className="flex items-center justify-center p-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors">
@@ -108,7 +196,7 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
             </button>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-brand-900/10 dark:to-amber-900/10 rounded-2xl p-6 border border-brand-100 dark:border-brand-800 mb-10">
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-brand-900/10 dark:to-amber-900/10 rounded-2xl p-6 border border-brand-100 dark:border-brand-800 mb-10 no-print">
             <div className="flex items-start gap-4">
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
                     <ExternalLink className="h-6 w-6 text-brand-500" />
@@ -123,7 +211,7 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
             </div>
         </div>
 
-        <Button onClick={onComplete} className="w-full py-4 text-lg shadow-lg shadow-brand-500/20">View Full Confirmation</Button>
+        <Button onClick={onComplete} className="w-full py-4 text-lg shadow-lg shadow-brand-500/20 no-print">View Full Confirmation</Button>
       </div>
     );
   }

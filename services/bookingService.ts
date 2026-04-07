@@ -178,7 +178,7 @@ export const confirmProviderBooking = async (bookingId: string): Promise<Booking
     booking.pnr = pnr;
     booking.commissionEarned = commission;
     
-    // Save to persistent history
+    // Save to persistent history ONLY on success
     saveBookingToHistory(booking);
 
     console.log(`[Affiliate] Earned ₹${commission} on Booking ${bookingId}`);
@@ -196,10 +196,20 @@ export const confirmProviderBooking = async (bookingId: string): Promise<Booking
   } else {
     // SAGA PATTERN: COMPENSATING TRANSACTION
     // Provider failed, but payment succeeded. Must refund.
-    await processRefund(bookingId, booking.totalAmount);
-    booking.status = 'REFUNDED';
-    booking.error = 'Booking failed with provider. Refund initiated to Wallet.';
-    saveBookingToHistory(booking);
+    console.error(`[Booking] Provider confirmation failed for ${bookingId}. Initiating rollback/refund.`);
+    
+    try {
+      await processRefund(bookingId, booking.totalAmount);
+      booking.status = 'REFUNDED';
+      booking.error = 'Booking failed with provider. Refund initiated to Wallet.';
+    } catch (refundError) {
+      console.error(`[CRITICAL] Refund failed for booking ${bookingId}:`, refundError);
+      booking.status = 'FAILED';
+      booking.error = 'Booking failed and refund could not be processed automatically. Please contact support.';
+    }
+    
+    // DO NOT save failed/refunded bookings to the primary ticket history
+    // as per requirement: "no ticket should be created or stored in database"
     return booking;
   }
 };

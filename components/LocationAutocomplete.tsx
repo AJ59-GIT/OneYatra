@@ -224,7 +224,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
            <ul 
              id="location-listbox"
              role="listbox"
-             className="absolute z-50 left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-2xl dark:shadow-black/50 max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-slate-800 animate-in fade-in slide-in-from-top-2 duration-200"
+             className="absolute z-[1000] left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-2xl dark:shadow-black/50 max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-slate-800 animate-in fade-in slide-in-from-top-2 duration-200"
            >
               {suggestions.map((item, index) => (
                 <li 

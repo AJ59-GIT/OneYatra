@@ -243,7 +243,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
               </button>
             </div>
             <form onSubmit={handleQuickSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
+              <div className="relative z-40">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <LocationAutocomplete 
                   value={origin} 
@@ -252,7 +252,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold"
                 />
               </div>
-              <div className="relative">
+              <div className="relative z-30">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brand-500" />
                 <LocationAutocomplete 
                   value={destination} 
@@ -261,7 +261,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onSearch }) => {
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold"
                 />
               </div>
-              <div className="relative">
+              <div className="relative z-20">
                 <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input 
                   type="date" 

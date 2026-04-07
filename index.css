@@ -332,3 +332,29 @@
   background: radial-gradient(currentColor 20%, transparent 20%);
   background-size: 8px 8px;
 }
+
+/* Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-ticket, .printable-ticket * {
+    visibility: visible;
+  }
+  .printable-ticket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #eee !important;
+  }
+  /* Hide buttons during print */
+  .no-print {
+    display: none !important;
+  }
+}

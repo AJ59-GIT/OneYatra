@@ -132,17 +132,17 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
 
       {/* Dropdown Calendar */}
       {isOpen && (
-        <div className="absolute z-50 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 top-[calc(100%+12px)] bg-white rounded-xl shadow-2xl border border-gray-100 p-4 w-[320px] animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute z-[1000] left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 top-[calc(100%+12px)] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-100 dark:border-slate-800 p-4 w-[320px] animate-in fade-in zoom-in-95 duration-200">
           
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
-            <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Previous Month">
+            <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-500 dark:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Previous Month">
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <h3 className="font-bold text-gray-800">
+            <h3 className="font-bold text-gray-800 dark:text-white">
               {format(currentMonth, 'MMMM yyyy')}
             </h3>
-            <button onClick={handleNextMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Next Month">
+            <button onClick={handleNextMonth} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-500 dark:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Next Month">
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
@@ -150,7 +150,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           {/* Weekday Headers */}
           <div className="grid grid-cols-7 mb-2" aria-hidden="true">
             {weekDays.map(d => (
-              <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">
+              <div key={d} className="text-center text-xs font-semibold text-gray-400 dark:text-slate-500 py-1">
                 {d}
               </div>
             ))}
@@ -174,11 +174,11 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                   aria-selected={isSelected}
                   className={`
                     relative h-9 w-9 rounded-full flex items-center justify-center text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500
-                    ${!isCurrentMonth ? 'text-gray-300 opacity-50' : ''}
-                    ${isDisabled ? 'text-gray-200 cursor-not-allowed' : 'hover:bg-brand-50 cursor-pointer'}
+                    ${!isCurrentMonth ? 'text-gray-300 dark:text-slate-700 opacity-50' : ''}
+                    ${isDisabled ? 'text-gray-200 dark:text-slate-800 cursor-not-allowed' : 'hover:bg-brand-50 dark:hover:bg-brand-900/20 cursor-pointer'}
                     ${isSelected 
                         ? 'bg-brand-600 text-white font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30' 
-                        : isWknd && !isDisabled ? 'text-red-400 font-medium' : 'text-gray-700'}
+                        : isWknd && !isDisabled ? 'text-red-400 font-medium' : 'text-gray-700 dark:text-slate-300'}
                   `}
                 >
                   {format(day, 'd')}
@@ -195,7 +195,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           </div>
 
           {/* Legend */}
-          <div className="flex justify-center gap-4 text-[10px] text-gray-400 mb-4 border-t border-gray-50 pt-3" aria-hidden="true">
+          <div className="flex justify-center gap-4 text-[10px] text-gray-400 dark:text-slate-500 mb-4 border-t border-gray-50 dark:border-slate-800 pt-3" aria-hidden="true">
              <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>Low</div>
              <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>Mid</div>
              <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>High</div>
@@ -207,14 +207,14 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             role="button"
             tabIndex={0}
             onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') toggleFlexible(e); }}
-            className="flex items-center justify-between bg-gray-50 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="flex items-center justify-between bg-gray-50 dark:bg-slate-800/50 p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
-             <div className="text-xs font-semibold text-gray-700">Flexible Dates</div>
-             <div className={`w-10 h-5 rounded-full p-0.5 flex transition-colors ${isFlexible ? 'bg-brand-500 justify-end' : 'bg-gray-300 justify-start'}`}>
+             <div className="text-xs font-semibold text-gray-700 dark:text-slate-300">Flexible Dates</div>
+             <div className={`w-10 h-5 rounded-full p-0.5 flex transition-colors ${isFlexible ? 'bg-brand-500 justify-end' : 'bg-gray-300 dark:bg-slate-700 justify-start'}`}>
                 <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
              </div>
           </div>
-          <div className="text-[10px] text-gray-400 text-center mt-2">
+          <div className="text-[10px] text-gray-400 dark:text-slate-500 text-center mt-2">
             Search ±3 days from selected date
           </div>
         </div>

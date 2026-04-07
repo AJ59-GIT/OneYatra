@@ -8,6 +8,8 @@ import { getCurrentUser } from '../services/authService';
 import { getWalletBalance, payWithWallet } from '../services/walletService';
 import { sendBookingConfirmation, sendBookingSMS } from '../services/notificationService';
 import { useSettings } from '../contexts/SettingsContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useBooking } from '../contexts/BookingContext';
 import { checkPolicyCompliance, submitForApproval } from '../services/corporateService';
 import { validateGiftCard, redeemGiftCard } from '../services/giftCardService';
 import { getDocuments } from '../services/documentService'; 
@@ -41,14 +43,44 @@ const PROMO_CODES: Record<string, { type: 'FLAT' | 'PERCENT', value: number, min
 };
 
 export const BookingPage = ({ option, origin, destination, passengersCount, travelDate, onBack, onComplete }: BookingPageProps) => {
-  // ... existing state and logic ...
-  const { isB2BMode } = useSettings();
-  const [step, setStep] = useState<Step>('DETAILS');
+  const { isB2BMode, t, currency, formatPrice } = useSettings();
+  const { user, isLoggedIn } = useAuth();
+  const { 
+    state: { 
+      step, 
+      passengers, 
+      selectedSeats, 
+      selectedMeal, 
+      selectedRequests, 
+      specialRequestNotes,
+      hasInsurance,
+      hasCarbonOffset,
+      seatCost,
+      mealCost,
+      specialRequestCost,
+      insuranceCost,
+      carbonOffsetCost
+    },
+    initBooking,
+    updatePassengers,
+    updateSeats,
+    updateMeal,
+    updateSpecialRequests,
+    updateInsurance,
+    setStep,
+    resetBooking
+  } = useBooking();
+
+  // Initialize booking context on mount
+  useEffect(() => {
+    initBooking({ option, passengersCount, travelDate: travelDate || new Date().toISOString(), origin, destination });
+    return () => resetBooking();
+  }, [option, passengersCount, travelDate, origin, destination]);
+
   const [booking, setBooking] = useState<Booking | null>(null);
   const [processingStatus, setProcessingStatus] = useState('');
   
   // Passenger Form State
-  const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number>(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [savedTravelers, setSavedTravelers] = useState<SavedTraveler[]>([]);
@@ -56,19 +88,6 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
   // Vault Integration
   const [vaultDocs, setVaultDocs] = useState<UserDocument[]>([]);
   const [activeVaultIndex, setActiveVaultIndex] = useState<number | null>(null); 
-
-  // Add-on State
-  const [selectedSeats, setSelectedSeats] = useState<any[]>([]);
-  const [seatCost, setSeatCost] = useState(0);
-  const [mealCost, setMealCost] = useState(0);
-  const [insuranceCost, setInsuranceCost] = useState(0);
-  const [carbonOffsetCost, setCarbonOffsetCost] = useState(0);
-  const [specialRequestCost, setSpecialRequestCost] = useState(0);
-  const [hasInsurance, setHasInsurance] = useState(false);
-  const [hasCarbonOffset, setHasCarbonOffset] = useState(false);
-  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
-  const [specialRequestNotes, setSpecialRequestNotes] = useState('');
-  const [selectedRequests, setSelectedRequests] = useState<SpecialRequestOption[]>([]);
 
   // Cancellation Policy State
   const [isPolicyExpanded, setIsPolicyExpanded] = useState(false);
@@ -96,6 +115,36 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
   
   // Wallet State
   const [walletBalance, setWalletBalance] = useState(0);
+
+  // Simulation for checking addons availability (API delay handling)
+  useEffect(() => {
+    if (option && option.addonsAvailable === undefined) {
+      const timer = setTimeout(() => {
+        // Default to true for eligible modes if not specified by API
+        const isEligible = ['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode);
+        setBooking(prev => {
+          if (prev) return { ...prev, option: { ...prev.option, addonsAvailable: isEligible } };
+          return prev;
+        });
+        // We also need to update the local 'option' object if we want the loader to disappear
+        // But 'option' is a prop. We should use a local state for the active option if we want to modify it.
+        // For now, let's just use a local state to track if the check is complete.
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [option]);
+
+  const [addonsCheckComplete, setAddonsCheckComplete] = useState(false);
+  useEffect(() => {
+    if (option) {
+      if (option.addonsAvailable !== undefined) {
+        setAddonsCheckComplete(true);
+      } else {
+        const timer = setTimeout(() => setAddonsCheckComplete(true), 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [option]);
 
   // Saved Cards State
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
@@ -169,7 +218,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
         });
     }
     
-    setPassengers(initialPassengers);
+    updatePassengers(initialPassengers);
 
     // Load saved cards
     const cards = localStorage.getItem('oneyatra_saved_cards');
@@ -247,23 +296,22 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
 
   // ... (Handlers) ...
   const handleDetailsProceed = (seats: any[]) => {
-    setSelectedSeats(seats);
     const extra = seats.reduce((sum, s) => sum + s.price, 0);
-    setSeatCost(extra);
+    updateSeats(seats, extra);
     setStep('INSURANCE');
   };
 
   const handleInsuranceProceed = (insurance: boolean, carbonOffset: boolean) => {
-    setHasInsurance(insurance);
-    setHasCarbonOffset(carbonOffset);
-    
     const iCost = insurance ? (199 * passengersCount) : 0;
     const cCost = carbonOffset ? 49 : 0;
+    updateInsurance(insurance, carbonOffset, iCost, cCost);
     
-    setInsuranceCost(iCost);
-    setCarbonOffsetCost(cCost);
-    
-    if (['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode)) {
+    // Conditional Rendering Logic for FoodSelection (MEALS step)
+    // Render only when: Flight, Train, or Bus AND addonsAvailable is true
+    const isFoodEligible = ['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode);
+    const hasAddons = option.addonsAvailable === true || (option.addonsAvailable === undefined && isFoodEligible);
+
+    if (isFoodEligible && hasAddons) {
       setStep('MEALS');
     } else {
       setStep('SPECIAL_REQUESTS');
@@ -271,28 +319,22 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
   };
 
   const handleMealConfirmed = (meal: Meal | null, notes: string) => {
-    setSelectedMeal(meal);
-    setSpecialRequestNotes(prev => prev ? `${prev}. ${notes}` : notes);
-    setMealCost(meal ? (meal.price || 0) : 0);
+    updateMeal(meal, notes, meal ? (meal.price || 0) : 0);
     setStep('SPECIAL_REQUESTS');
   };
 
   const handleMealSkipped = () => {
-    setSelectedMeal(null);
-    setMealCost(0);
+    updateMeal(null, '', 0);
     setStep('SPECIAL_REQUESTS');
   };
 
   const handleSpecialRequestsConfirmed = (requests: SpecialRequestOption[], notes: string) => {
-    setSelectedRequests(requests);
-    setSpecialRequestNotes(prev => prev ? `${prev}. ${notes}` : notes);
-    setSpecialRequestCost(requests.reduce((sum, r) => sum + (r.price || 0), 0));
+    updateSpecialRequests(requests, notes, requests.reduce((sum, r) => sum + (r.price || 0), 0));
     setStep('PASSENGER_INFO');
   };
 
   const handleSpecialRequestsSkipped = () => {
-    setSelectedRequests([]);
-    setSpecialRequestCost(0);
+    updateSpecialRequests([], '', 0);
     setStep('PASSENGER_INFO');
   };
 
@@ -528,21 +570,29 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
     if (!paymentSuccess) { setStep('FAILED'); return; }
 
     setProcessingStatus(`Confirming with ${option.provider}...`);
-    const finalBooking = await confirmProviderBooking(booking.id);
-    finalBooking.totalAmount = finalAmount + giftCardAmount; 
-    finalBooking.discount = appliedDiscount || undefined;
-    finalBooking.giftCardRedemption = appliedGiftCard || undefined;
-    setBooking({...finalBooking});
+    try {
+      const finalBooking = await confirmProviderBooking(booking.id);
+      finalBooking.totalAmount = finalAmount + giftCardAmount; 
+      finalBooking.discount = appliedDiscount || undefined;
+      finalBooking.giftCardRedemption = appliedGiftCard || undefined;
+      setBooking({...finalBooking});
 
-    if (finalBooking.status === 'CONFIRMED') {
-      setStep('CONFIRMED');
-      const user = getCurrentUser();
-      if(user && user.email) {
-          sendBookingConfirmation(finalBooking, user.email);
-          const phone = user.phone || '9876543210';
-          sendBookingSMS(finalBooking, phone);
+      if (finalBooking.status === 'CONFIRMED') {
+        setStep('CONFIRMED');
+        const user = getCurrentUser();
+        if(user && user.email) {
+            sendBookingConfirmation(finalBooking, user.email);
+            const phone = user.phone || '9876543210';
+            sendBookingSMS(finalBooking, phone);
+        }
+      } else {
+        // Handle REFUNDED or FAILED status from provider
+        setProcessingStatus(finalBooking.error || 'Booking failed with provider.');
+        setStep('FAILED');
       }
-    } else {
+    } catch (error) {
+      console.error("Critical error during provider confirmation:", error);
+      setPaymentError("A critical error occurred while confirming your booking. Please check your wallet for any refunds.");
       setStep('FAILED');
     }
   };
@@ -550,7 +600,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
   const updatePassenger = (index: number, field: keyof Passenger, value: any) => {
     const newPassengers = [...passengers];
     newPassengers[index] = { ...newPassengers[index], [field]: value };
-    setPassengers(newPassengers);
+    updatePassengers(newPassengers);
     if (errors[`${field}_${index}`]) {
       const newErrors = { ...errors };
       delete newErrors[`${field}_${index}`];
@@ -575,7 +625,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
           newPassengers[idx].age = String(currentYear - birthYear);
       }
 
-      setPassengers(newPassengers);
+      updatePassengers(newPassengers);
       setActiveVaultIndex(null);
   };
 
@@ -583,15 +633,28 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {step !== 'CONFIRMED' && step !== 'FAILED' && step !== 'PENDING_APPROVAL' && (
+      {/* Fallback Loader if data is not ready */}
+      {(!option || !addonsCheckComplete) && step !== 'CONFIRMED' && step !== 'FAILED' && (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
+          <p className="text-gray-500 dark:text-gray-400 animate-pulse">Checking available add-ons...</p>
+        </div>
+      )}
+
+      {option && addonsCheckComplete && step !== 'CONFIRMED' && step !== 'FAILED' && step !== 'PENDING_APPROVAL' && (
         <button 
           onClick={() => {
             if (step === 'DETAILS') onBack();
             else if (step === 'INSURANCE') setStep('DETAILS');
             else if (step === 'MEALS') setStep('INSURANCE');
             else if (step === 'SPECIAL_REQUESTS') {
-              if (['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode)) setStep('MEALS');
-              else setStep('INSURANCE');
+              const isFoodEligible = ['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode);
+              const hasAddons = option.addonsAvailable === true || (option.addonsAvailable === undefined && isFoodEligible);
+              if (isFoodEligible && hasAddons) {
+                setStep('MEALS');
+              } else {
+                setStep('INSURANCE');
+              }
             }
             else if (step === 'PASSENGER_INFO') setStep('SPECIAL_REQUESTS');
             else if (step === 'PAYMENT') setStep('PASSENGER_INFO');
@@ -624,7 +687,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
         />
       )}
 
-      {step === 'MEALS' && (
+      {step === 'MEALS' && (option.addonsAvailable === true || (option.addonsAvailable === undefined && ['FLIGHT', 'TRAIN', 'BUS'].includes(option.mode))) && (
         <BookingMealSelection 
           passengers={Array(passengersCount).fill({})}
           onConfirmed={handleMealConfirmed}

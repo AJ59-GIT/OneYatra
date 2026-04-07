@@ -61,6 +61,7 @@ export interface TravelOption {
   ecoScore: number;
   features: string[];
   tag?: string | null;
+  addonsAvailable?: boolean;
   legs?: TravelOption[];
   deepLink?: string;
   deepLinkFallback?: string;

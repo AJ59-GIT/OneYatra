@@ -22,6 +22,7 @@ import { SOSButton } from './components/SOSButton';
 import { Loader2, XCircle } from 'lucide-react';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { BookingProvider } from './contexts/BookingContext';
 import { AnimatePresence } from 'motion/react';
 import { PageTransition } from './components/PageTransition';
 
@@ -51,6 +52,7 @@ const ReferAndEarnPage = lazy(() => import('./pages/ReferAndEarnPage'));
 const AboutUsPage = lazy(() => import('./pages/AboutUsPage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
+const CompanyInfoPage = lazy(() => import('./pages/CompanyInfoPage'));
 const ReviewSubmissionPage = lazy(() => import('./pages/ReviewSubmissionPage'));
 const VendorOnboardingPage = lazy(() => import('./pages/VendorOnboardingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
@@ -248,6 +250,7 @@ const AppContent = () => {
                 <Route path="/about" element={isLoggedIn ? <PageTransition><AboutUsPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
                 <Route path="/blog" element={isLoggedIn ? <PageTransition><BlogPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
                 <Route path="/faq" element={isLoggedIn ? <PageTransition><FAQPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
+                <Route path="/company-info" element={isLoggedIn ? <PageTransition><CompanyInfoPage /></PageTransition> : <Navigate to="/login" />} />
                 <Route path="/review/:bookingId" element={isLoggedIn ? <PageTransition><ReviewSubmissionPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
                 <Route path="/vendor-onboarding" element={isLoggedIn ? <PageTransition><VendorOnboardingPage onBack={handleBackToHome} /></PageTransition> : <Navigate to="/login" />} />
                 <Route path="/booking-success/:bookingId" element={isLoggedIn ? <PageTransition><BookingSuccessPage /></PageTransition> : <Navigate to="/login" />} />
@@ -281,9 +284,11 @@ const App = () => {
   return (
     <SettingsProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <BookingProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </BookingProvider>
       </AuthProvider>
     </SettingsProvider>
   );
