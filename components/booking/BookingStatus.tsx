@@ -77,6 +77,34 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
     }
   };
 
+  const handleShare = async () => {
+    if (!booking) return;
+    
+    const shareData = {
+      title: 'My OneYatra Ticket',
+      text: `Check out my booking from ${booking.origin} to ${booking.destination} on ${booking.travelDate}`,
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        showToast('Shared successfully', 'success');
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Link copied to clipboard', 'success');
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
+  };
+
+  const handleExploreHotels = () => {
+    if (!booking) return;
+    // Navigate to a simulated hotel search or external site
+    window.open(`https://www.google.com/search?q=hotels+in+${encodeURIComponent(booking.destination)}`, '_blank');
+  };
+
   if (step === 'PROCESSING') {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in-95">
@@ -107,7 +135,7 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
 
   if (step === 'CONFIRMED' && booking) {
     return (
-      <div className="animate-in fade-in zoom-in-95 duration-500 relative">
+      <div className="animate-in fade-in zoom-in-95 duration-500 relative z-10">
         {/* Toast Notification */}
         {toast && (
           <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl animate-in slide-in-from-top duration-300 ${
@@ -172,28 +200,35 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
         </div>
 
         <div className="flex flex-wrap gap-3 mb-10 no-print">
-            <button 
+            <Button 
+              variant="outline"
               onClick={handleDownloadPDF}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors"
+              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
             >
                 <Download className="h-4 w-4" /> E-Ticket
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant="outline"
               onClick={handleEmail}
-              disabled={emailLoading}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+              isLoading={emailLoading}
+              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
             >
-                {emailLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Email
-            </button>
-            <button 
+                <Mail className="h-4 w-4" /> Email
+            </Button>
+            <Button 
+              variant="outline"
               onClick={handlePrint}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold transition-colors"
+              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
             >
                 <Printer className="h-4 w-4" /> Print
-            </button>
-            <button className="flex items-center justify-center p-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors">
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleShare}
+              className="p-3 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
+            >
                 <Share2 className="h-4 w-4" />
-            </button>
+            </Button>
         </div>
 
         <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-brand-900/10 dark:to-amber-900/10 rounded-2xl p-6 border border-brand-100 dark:border-brand-800 mb-10 no-print">
@@ -201,12 +236,17 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
                     <ExternalLink className="h-6 w-6 text-brand-500" />
                 </div>
-                <div>
+                <div className="flex-1">
                     <h4 className="text-sm font-bold text-brand-900 dark:text-brand-300">Need a place to stay?</h4>
                     <p className="text-xs text-brand-700 dark:text-brand-400 mt-1">Get up to 20% off on hotel bookings near your destination.</p>
-                    <button className="mt-3 text-xs font-bold text-brand-500 flex items-center gap-1 hover:underline">
+                    <Button 
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleExploreHotels}
+                      className="mt-3 p-0 h-auto text-xs font-bold text-brand-500 hover:bg-transparent hover:underline gap-1"
+                    >
                         Explore Hotels <ArrowRight className="h-3 w-3" />
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
