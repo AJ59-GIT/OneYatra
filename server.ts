@@ -117,6 +117,10 @@ async function startServer() {
   }));
 
   // API routes
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", env: process.env.NODE_ENV, time: new Date().toISOString() });
+  });
+
   app.get("/api/locations", async (req, res) => {
     try {
       const { q, query, limit, lat, lon, lang, reverse, source } = req.query;
@@ -293,11 +297,39 @@ async function startServer() {
   } else {
     // In production, serve static files from dist
     const distPath = path.join(__dirname, "dist");
+    const indexPath = path.join(distPath, "index.html");
+    
+    // Check if dist exists for diagnostics
+    import('fs').then(fs => {
+      if (!fs.existsSync(distPath)) {
+        console.error(`CRITICAL ERROR: 'dist' directory not found at ${distPath}. The application will fail to serve the frontend. Please ensure 'npm run build' is part of your build command.`);
+      } else if (!fs.existsSync(indexPath)) {
+        console.error(`CRITICAL ERROR: 'index.html' not found at ${indexPath}.`);
+      } else {
+        console.log(`Production mode: Serving static files from ${distPath}`);
+      }
+    });
+
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+    app.get("*", (req, res, next) => {
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          console.error("Error sending index.html:", err);
+          res.status(500).send("Frontend build missing. Please ensure 'npm run build' was executed during deployment.");
+        }
+      });
     });
   }
+
+  // Global error handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error("Unhandled Server Error:", err);
+    res.status(500).json({ 
+      error: "Internal Server Error", 
+      message: err.message,
+      path: req.path
+    });
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
