@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, Map, Shield, Mail, Smartphone, Lock, User as User
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { FormErrorSummary } from '../components/FormErrorSummary';
-import { loginWithEmail, registerWithEmail, loginWithGoogle, resendVerificationEmail, checkPasswordStrength, validateEmail, setupRecaptcha, loginWithPhone, verifyOTP } from '../services/authService';
+import { loginWithEmail, registerWithEmail, loginWithGoogle, resendVerificationEmail, checkPasswordStrength, validateEmail, setupRecaptcha, loginWithPhone, verifyOTP, loginAsDemoUser } from '../services/authService';
 import { sendPasswordReset } from '../services/notificationService';
 import { ConfirmationResult } from 'firebase/auth';
 
@@ -144,6 +144,15 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     }
   };
 
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    const result = await loginAsDemoUser();
+    setIsLoading(false);
+    if (result.success) {
+      onLoginSuccess();
+    }
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
@@ -278,6 +287,16 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
           Continue with Email
           <ArrowRight className="ml-auto h-5 w-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
         </Button>
+
+        <div className="pt-2">
+          <button 
+            type="button" 
+            onClick={handleDemoLogin}
+            className="w-full text-xs text-gray-400 hover:text-brand-500 transition-colors uppercase tracking-widest font-bold"
+          >
+            Skip for now (Demo Mode)
+          </button>
+        </div>
       </div>
       
       <p className="text-xs text-center lg:text-left text-gray-400 mt-4">

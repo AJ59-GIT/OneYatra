@@ -112,6 +112,7 @@ if (isConfigValid(firebaseConfig)) {
   auth = getAuth(app);
   storage = getStorage(app);
   googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
   emailProvider = new EmailAuthProvider();
 } else {
   console.warn("Firebase initialization skipped due to invalid or placeholder configuration.");

@@ -241,14 +241,22 @@ export const checkPasswordStrength = (password: string): { score: number; messag
 };
 
 const handleFirebaseError = (error: any): string => {
-  if (error.code === 'auth/requests-from-referer-blocked') {
-    return "This domain is not authorized in Firebase. Please add your Render URL to 'Authorized domains' in your Firebase Console (Authentication > Settings > Authorized domains).";
+  const currentDomain = typeof window !== 'undefined' ? window.location.hostname : 'your-domain.com';
+  
+  if (error.code === 'auth/requests-from-referer-blocked' || error.message?.includes('referer-blocked')) {
+    return `This domain (${currentDomain}) is not authorized in Firebase. Please add it to 'Authorized domains' in your Firebase Console (Authentication > Settings > Authorized domains).`;
+  }
+  if (error.code === 'auth/unauthorized-domain') {
+    return `The domain ${currentDomain} is not authorized for Firebase Authentication. Please add it to the Authorized Domains list in the Firebase Console.`;
   }
   if (error.code === 'auth/invalid-api-key') {
-    return "Invalid Firebase API Key. Please check your environment variables.";
+    return "Invalid Firebase API Key. Please check your environment variables or firebase-applet-config.json.";
   }
   if (error.code === 'auth/popup-closed-by-user') {
-    return "The login popup was closed before completion. Please ensure popups are allowed for this site and try again. If the issue persists, check if your domain is authorized in Firebase.";
+    return "The login popup was closed before completion. This often happens if the domain is not authorized in Firebase or if popups are blocked. Please ensure popups are allowed and your domain is authorized.";
+  }
+  if (error.code === 'auth/operation-not-allowed') {
+    return "This sign-in method (e.g., Google) is not enabled in your Firebase project. Please enable it in the Firebase Console (Authentication > Sign-in method).";
   }
   return error.message || "An unexpected error occurred.";
 };
@@ -293,7 +301,7 @@ export const loginWithGoogle = async (): Promise<{ success: boolean; message?: s
   console.log("authService: loginWithGoogle called.");
   if (!auth || !googleProvider) {
     console.error("authService: loginWithGoogle failed - Auth not initialized.", { auth: !!auth, provider: !!googleProvider });
-    return { success: false, message: "Firebase Auth not initialized." };
+    return { success: false, message: "Firebase Auth not initialized. Please check your Firebase configuration." };
   }
   try {
     console.log("authService: Initiating signInWithPopup...");
@@ -304,6 +312,35 @@ export const loginWithGoogle = async (): Promise<{ success: boolean; message?: s
     console.error("authService: loginWithGoogle failed.", error.code, error.message);
     return { success: false, message: handleFirebaseError(error) };
   }
+};
+
+/**
+ * Demo Login for testing when Firebase is not configured or domain is not authorized.
+ * This should only be used for development/preview purposes.
+ */
+export const loginAsDemoUser = async (): Promise<{ success: boolean }> => {
+  const demoProfile: UserProfile = {
+    email: 'demo@oneyatra.com',
+    name: 'Demo Traveler',
+    role: 'USER',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Demo',
+    preferences: {
+      currency: 'INR',
+      language: 'en'
+    },
+    addresses: [],
+    createdAt: new Date().toISOString(),
+    isActive: true
+  };
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(demoProfile));
+    localStorage.setItem('oneyatra_user', 'true');
+    // Trigger a storage event for other tabs
+    window.dispatchEvent(new Event('storage'));
+  }
+  
+  return { success: true };
 };
 
 export const updateUserProfile = async (profile: UserProfile): Promise<boolean> => {
