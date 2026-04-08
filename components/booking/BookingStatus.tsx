@@ -2,8 +2,7 @@ import React, { useRef, useState } from 'react';
 import { CheckCircle, XCircle, Loader2, Printer, Download, Mail, ExternalLink, Ticket, QrCode, Calendar, MapPin, Users, CreditCard, ShieldCheck, ArrowRight, Share2, Building2, AlertCircle, Check } from 'lucide-react';
 import { Booking } from '../../types';
 import { Button } from '../Button';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
+import { generateInvoicePDF } from '../../utils/invoiceGenerator';
 
 interface BookingStatusProps {
   step: 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'PENDING_APPROVAL';
@@ -13,8 +12,10 @@ interface BookingStatusProps {
 }
 
 export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, processingStatus, onComplete }) => {
+  console.log('BookingStatus rendering, step:', step);
   const ticketRef = useRef<HTMLDivElement>(null);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -31,24 +32,23 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
     }
   };
 
-  const handleDownloadPDF = () => {
-    if (!ticketRef.current) return;
+  const handleDownloadPDF = async () => {
+    if (!booking) {
+      console.error('No booking data available for PDF generation');
+      showToast('Booking data missing', 'error');
+      return;
+    }
 
-    const element = ticketRef.current;
-    const opt = {
-      margin: 10,
-      filename: `OneYatra_Ticket_${booking?.id || 'booking'}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
-    };
-
+    setPdfLoading(true);
     try {
-      html2pdf().set(opt).from(element).save();
-      showToast('PDF download started', 'success');
+      console.log('Generating PDF using jspdf utility...');
+      await generateInvoicePDF(booking);
+      showToast('E-Ticket downloaded successfully', 'success');
     } catch (error) {
       console.error('PDF generation failed:', error);
-      showToast('Failed to generate PDF', 'error');
+      showToast('Failed to generate PDF. Please try printing instead.', 'error');
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -135,7 +135,7 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
 
   if (step === 'CONFIRMED' && booking) {
     return (
-      <div className="animate-in fade-in zoom-in-95 duration-500 relative z-10">
+      <div className="animate-in fade-in zoom-in-95 duration-500 relative z-30 pointer-events-auto">
         {/* Toast Notification */}
         {toast && (
           <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl animate-in slide-in-from-top duration-300 ${
@@ -199,33 +199,50 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-10 no-print">
+        <div className="flex flex-wrap gap-3 mb-10 no-print relative z-40">
             <Button 
               variant="outline"
-              onClick={handleDownloadPDF}
-              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
+              type="button"
+              onClick={() => {
+                console.log('Download PDF clicked');
+                handleDownloadPDF();
+              }}
+              isLoading={pdfLoading}
+              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:scale-105 transition-transform cursor-pointer"
             >
                 <Download className="h-4 w-4" /> E-Ticket
             </Button>
             <Button 
               variant="outline"
-              onClick={handleEmail}
+              type="button"
+              onClick={() => {
+                console.log('Email clicked');
+                handleEmail();
+              }}
               isLoading={emailLoading}
-              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
+              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:scale-105 transition-transform cursor-pointer"
             >
                 <Mail className="h-4 w-4" /> Email
             </Button>
             <Button 
               variant="outline"
-              onClick={handlePrint}
-              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
+              type="button"
+              onClick={() => {
+                console.log('Print clicked');
+                handlePrint();
+              }}
+              className="flex-1 gap-2 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:scale-105 transition-transform cursor-pointer"
             >
                 <Printer className="h-4 w-4" /> Print
             </Button>
             <Button 
               variant="outline"
-              onClick={handleShare}
-              className="p-3 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
+              type="button"
+              onClick={() => {
+                console.log('Share clicked');
+                handleShare();
+              }}
+              className="p-3 bg-gray-100 dark:bg-slate-800 border-none hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:scale-105 transition-transform cursor-pointer"
             >
                 <Share2 className="h-4 w-4" />
             </Button>
@@ -242,8 +259,12 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
                     <Button 
                       variant="ghost"
                       size="sm"
-                      onClick={handleExploreHotels}
-                      className="mt-3 p-0 h-auto text-xs font-bold text-brand-500 hover:bg-transparent hover:underline gap-1"
+                      type="button"
+                      onClick={() => {
+                        console.log('Explore Hotels clicked');
+                        handleExploreHotels();
+                      }}
+                      className="mt-3 p-0 h-auto text-xs font-bold text-brand-500 hover:bg-transparent hover:underline gap-1 relative z-40 cursor-pointer"
                     >
                         Explore Hotels <ArrowRight className="h-3 w-3" />
                     </Button>
@@ -251,14 +272,23 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
             </div>
         </div>
 
-        <Button onClick={onComplete} className="w-full py-4 text-lg shadow-lg shadow-brand-500/20 no-print">View Full Confirmation</Button>
+        <Button 
+          onClick={() => {
+            console.log('View Full Confirmation clicked');
+            onComplete();
+          }} 
+          type="button"
+          className="w-full py-4 text-lg shadow-lg shadow-brand-500/20 no-print relative z-40 cursor-pointer"
+        >
+          View Full Confirmation
+        </Button>
       </div>
     );
   }
 
   if (step === 'FAILED') {
     return (
-      <div className="text-center py-20 animate-in fade-in zoom-in-95">
+      <div className="text-center py-20 animate-in fade-in zoom-in-95 relative z-30">
         <div className="inline-flex items-center justify-center w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-full mb-6 relative">
           <XCircle className="h-12 w-12 text-red-600" />
           <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-900 p-1 rounded-full shadow-sm">
@@ -268,9 +298,28 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Booking Failed</h2>
         <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">We couldn't process your payment. This could be due to insufficient funds, network issues, or bank rejection.</p>
         
-        <div className="flex flex-col gap-3 max-w-sm mx-auto">
-            <Button onClick={() => window.location.reload()} className="w-full py-4">Try Again</Button>
-            <Button variant="outline" onClick={onComplete} className="w-full">View Other Options</Button>
+        <div className="flex flex-col gap-3 max-w-sm mx-auto relative z-40">
+            <Button 
+              type="button"
+              onClick={() => {
+                console.log('Try Again clicked');
+                window.location.reload();
+              }} 
+              className="w-full py-4 cursor-pointer hover:scale-105 transition-transform"
+            >
+              Try Again
+            </Button>
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => {
+                console.log('View Other Options clicked');
+                onComplete();
+              }} 
+              className="w-full cursor-pointer hover:scale-105 transition-transform"
+            >
+              View Other Options
+            </Button>
         </div>
 
         <p className="mt-8 text-xs text-gray-400">If money was deducted, it will be refunded within 5-7 business days.</p>
@@ -280,7 +329,7 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
 
   if (step === 'PENDING_APPROVAL') {
     return (
-      <div className="text-center py-20 animate-in fade-in zoom-in-95">
+      <div className="text-center py-20 animate-in fade-in zoom-in-95 relative z-30">
         <div className="inline-flex items-center justify-center w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-6 relative">
           <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -301,7 +350,16 @@ export const BookingStatus: React.FC<BookingStatusProps> = ({ step, booking, pro
             </div>
         </div>
 
-        <Button onClick={onComplete} className="w-full max-w-sm py-4">Go to My Trips</Button>
+        <Button 
+          type="button"
+          onClick={() => {
+            console.log('Go to My Trips clicked');
+            onComplete();
+          }} 
+          className="w-full max-w-sm py-4 cursor-pointer hover:scale-105 transition-transform relative z-40"
+        >
+          Go to My Trips
+        </Button>
       </div>
     );
   }

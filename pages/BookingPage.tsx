@@ -632,7 +632,7 @@ export const BookingPage = ({ option, origin, destination, passengersCount, trav
   const inputClasses = "col-span-1 border border-gray-300 dark:border-slate-600 rounded-lg p-3 text-xs bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 relative z-20">
       {/* Fallback Loader if data is not ready */}
       {(!option || !addonsCheckComplete) && step !== 'CONFIRMED' && step !== 'FAILED' && (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
