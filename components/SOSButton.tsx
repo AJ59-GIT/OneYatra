@@ -10,7 +10,7 @@ export const SOSButton: React.FC = () => {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 z-40 bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg shadow-red-600/30 transition-all hover:scale-110 flex items-center justify-center group"
+        className="fixed bottom-36 md:bottom-24 right-4 sm:right-6 z-40 bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg shadow-red-600/30 transition-all hover:scale-110 flex items-center justify-center group"
         aria-label="Safety Center"
         title="Safety Center"
       >

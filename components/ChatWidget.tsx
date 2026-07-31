@@ -54,17 +54,17 @@ export const ChatWidget: React.FC = () => {
       {/* Floating Button */}
       <button 
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-40 bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 flex items-center justify-center ${isOpen ? 'hidden' : 'flex'}`}
+        className={`fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 bg-brand-600 hover:bg-brand-700 text-white p-3.5 sm:p-4 rounded-full shadow-2xl transition-all hover:scale-110 flex items-center justify-center ${isOpen ? 'hidden' : 'flex'}`}
         aria-label="Open Support Chat"
       >
-        <MessageSquare className="h-6 w-6" />
+        <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6" />
         <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
       </button>
 
       {/* Chat Window */}
       <div 
-        className={`fixed bottom-6 right-6 z-50 w-full max-w-[350px] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300 transform origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none'}`}
-        style={{ maxHeight: 'calc(100vh - 100px)' }}
+        className={`fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] max-w-[360px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden transition-all duration-300 transform origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none'}`}
+        style={{ maxHeight: 'calc(100vh - 120px)' }}
       >
         {/* Header */}
         <div className="bg-brand-600 p-4 flex justify-between items-center text-white">
@@ -78,27 +78,27 @@ export const ChatWidget: React.FC = () => {
                 </div>
             </div>
             <div className="flex gap-2">
-                <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1.5 rounded transition-colors">
+                <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1.5 rounded transition-colors" aria-label="Minimize Chat">
                     <Minimize2 className="h-4 w-4" />
                 </button>
-                <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1.5 rounded transition-colors">
+                <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1.5 rounded transition-colors" aria-label="Close Chat">
                     <X className="h-4 w-4" />
                 </button>
             </div>
         </div>
 
         {/* Messages */}
-        <div className="h-80 overflow-y-auto p-4 bg-slate-50 space-y-3 custom-scrollbar">
-            <div className="text-center text-[10px] text-gray-400 my-2">Today</div>
+        <div className="h-72 sm:h-80 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-950 space-y-3 custom-scrollbar">
+            <div className="text-center text-[10px] text-gray-400 dark:text-gray-500 my-2">Today</div>
             {messages.map(msg => (
                 <div key={msg.id} className={`flex ${msg.sender === 'USER' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-xl text-sm shadow-sm ${
+                    <div className={`max-w-[85%] p-3 rounded-xl text-sm shadow-sm ${
                         msg.sender === 'USER' 
                         ? 'bg-brand-600 text-white rounded-tr-none' 
-                        : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                        : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-slate-700 rounded-tl-none'
                     }`}>
                         {msg.text}
-                        <div className={`text-[9px] mt-1 text-right ${msg.sender === 'USER' ? 'text-brand-200' : 'text-gray-400'}`}>
+                        <div className={`text-[9px] mt-1 text-right ${msg.sender === 'USER' ? 'text-brand-200' : 'text-gray-400 dark:text-gray-500'}`}>
                             {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export const ChatWidget: React.FC = () => {
             ))}
             {isTyping && (
                 <div className="flex justify-start">
-                    <div className="bg-white border border-gray-100 p-3 rounded-xl rounded-tl-none shadow-sm flex gap-1">
+                    <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-3 rounded-xl rounded-tl-none shadow-sm flex gap-1">
                         <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
                         <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-100"></div>
                         <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-200"></div>
@@ -117,20 +117,20 @@ export const ChatWidget: React.FC = () => {
         </div>
 
         {/* Input */}
-        <div className="p-3 border-t border-gray-100 bg-white">
+        <div className="p-3 border-t border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
             <form onSubmit={handleSend} className="flex gap-2">
                 <input 
                     type="text" 
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     placeholder="Type a message..."
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="flex-1 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <button type="submit" disabled={!input.trim()} className="bg-brand-600 text-white p-2 rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
                     <Send className="h-4 w-4" />
                 </button>
             </form>
-            <div className="text-[10px] text-center text-gray-400 mt-2 flex justify-center items-center">
+            <div className="text-[10px] text-center text-gray-400 dark:text-gray-500 mt-2 flex justify-center items-center">
                 Powered by Gemini AI <span className="mx-1">•</span> <a href="#" className="hover:underline">Terms</a>
             </div>
         </div>

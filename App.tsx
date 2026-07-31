@@ -70,9 +70,48 @@ const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, loading, isAuthReady, user, logout, firebaseUser } = useAuth();
-  const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
-  const [selectedOption, setSelectedOption] = useState<TravelOption | null>(null);
-  const [bookingContext, setBookingContext] = useState<{origin: string, destination: string} | null>(null);
+  const [searchParams, setSearchParamsState] = useState<SearchParams | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('oneyatra_search_params');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [selectedOption, setSelectedOptionState] = useState<TravelOption | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('oneyatra_selected_option');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [bookingContext, setBookingContextState] = useState<{origin: string, destination: string} | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('oneyatra_booking_context');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const setSearchParams = (params: SearchParams | null) => {
+    setSearchParamsState(params);
+    if (params) sessionStorage.setItem('oneyatra_search_params', JSON.stringify(params));
+    else sessionStorage.removeItem('oneyatra_search_params');
+  };
+
+  const setSelectedOption = (option: TravelOption | null) => {
+    setSelectedOptionState(option);
+    if (option) sessionStorage.setItem('oneyatra_selected_option', JSON.stringify(option));
+    else sessionStorage.removeItem('oneyatra_selected_option');
+  };
+
+  const setBookingContext = (ctx: {origin: string, destination: string} | null) => {
+    setBookingContextState(ctx);
+    if (ctx) sessionStorage.setItem('oneyatra_booking_context', JSON.stringify(ctx));
+    else sessionStorage.removeItem('oneyatra_booking_context');
+  };
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const mainContentRef = useRef<HTMLElement>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);

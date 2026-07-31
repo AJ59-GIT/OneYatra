@@ -14,13 +14,38 @@ export interface LocationSuggestion {
   lng: number;
 }
 
-const FALLBACK_AIRPORTS: LocationSuggestion[] = [
+const FALLBACK_CITIES_AND_AIRPORTS: LocationSuggestion[] = [
+  // Airports
   { id: 'DEL', city: 'Indira Gandhi International Airport', state: 'Delhi', country: 'India', type: 'AIRPORT', lat: 28.5562, lng: 77.1000, code: 'DEL' },
   { id: 'BOM', city: 'Chhatrapati Shivaji Maharaj International Airport', state: 'Mumbai, Maharashtra', country: 'India', type: 'AIRPORT', lat: 19.0896, lng: 72.8656, code: 'BOM' },
   { id: 'BLR', city: 'Kempegowda International Airport', state: 'Bengaluru, Karnataka', country: 'India', type: 'AIRPORT', lat: 13.1986, lng: 77.7066, code: 'BLR' },
   { id: 'MAA', city: 'Chennai International Airport', state: 'Chennai, Tamil Nadu', country: 'India', type: 'AIRPORT', lat: 12.9941, lng: 80.1709, code: 'MAA' },
   { id: 'HYD', city: 'Rajiv Gandhi International Airport', state: 'Hyderabad, Telangana', country: 'India', type: 'AIRPORT', lat: 17.2403, lng: 78.4294, code: 'HYD' },
   { id: 'CCU', city: 'Netaji Subhash Chandra Bose International Airport', state: 'Kolkata, West Bengal', country: 'India', type: 'AIRPORT', lat: 22.6547, lng: 88.4467, code: 'CCU' },
+  { id: 'GOI', city: 'Goa International Airport (Dabolim)', state: 'Goa', country: 'India', type: 'AIRPORT', lat: 15.3808, lng: 73.8314, code: 'GOI' },
+  { id: 'PNQ', city: 'Pune Airport', state: 'Pune, Maharashtra', country: 'India', type: 'AIRPORT', lat: 18.5822, lng: 73.9197, code: 'PNQ' },
+  { id: 'AMD', city: 'Sardar Vallabhbhai Patel International Airport', state: 'Ahmedabad, Gujarat', country: 'India', type: 'AIRPORT', lat: 23.0772, lng: 72.6347, code: 'AMD' },
+  { id: 'COK', city: 'Cochin International Airport', state: 'Kochi, Kerala', country: 'India', type: 'AIRPORT', lat: 10.1520, lng: 76.4019, code: 'COK' },
+
+  // Major Cities
+  { id: 'CITY-DEL', city: 'New Delhi', state: 'Delhi NCR', country: 'India', type: 'CITY', lat: 28.6139, lng: 77.2090 },
+  { id: 'CITY-BOM', city: 'Mumbai', state: 'Maharashtra', country: 'India', type: 'CITY', lat: 19.0760, lng: 72.8777 },
+  { id: 'CITY-BLR', city: 'Bengaluru', state: 'Karnataka', country: 'India', type: 'CITY', lat: 12.9716, lng: 77.5946 },
+  { id: 'CITY-HYD', city: 'Hyderabad', state: 'Telangana', country: 'India', type: 'CITY', lat: 17.3850, lng: 78.4867 },
+  { id: 'CITY-MAA', city: 'Chennai', state: 'Tamil Nadu', country: 'India', type: 'CITY', lat: 13.0827, lng: 80.2707 },
+  { id: 'CITY-CCU', city: 'Kolkata', state: 'West Bengal', country: 'India', type: 'CITY', lat: 22.5726, lng: 88.3639 },
+  { id: 'CITY-PNQ', city: 'Pune', state: 'Maharashtra', country: 'India', type: 'CITY', lat: 18.5204, lng: 73.8567 },
+  { id: 'CITY-AMD', city: 'Ahmedabad', state: 'Gujarat', country: 'India', type: 'CITY', lat: 23.0225, lng: 72.5714 },
+  { id: 'CITY-JAI', city: 'Jaipur', state: 'Rajasthan', country: 'India', type: 'CITY', lat: 26.9124, lng: 75.7873 },
+  { id: 'CITY-LKO', city: 'Lucknow', state: 'Uttar Pradesh', country: 'India', type: 'CITY', lat: 26.8467, lng: 80.9462 },
+  { id: 'CITY-VNS', city: 'Varanasi', state: 'Uttar Pradesh', country: 'India', type: 'CITY', lat: 25.3176, lng: 82.9739 },
+  { id: 'CITY-AGR', city: 'Agra', state: 'Uttar Pradesh', country: 'India', type: 'CITY', lat: 27.1767, lng: 78.0081 },
+  { id: 'CITY-GOA', city: 'Panaji', state: 'Goa', country: 'India', type: 'CITY', lat: 15.4909, lng: 73.8278 },
+  { id: 'CITY-COK', city: 'Kochi', state: 'Kerala', country: 'India', type: 'CITY', lat: 9.9312, lng: 76.2673 },
+  { id: 'CITY-IND', city: 'Indore', state: 'Madhya Pradesh', country: 'India', type: 'CITY', lat: 22.7196, lng: 75.8577 },
+  { id: 'CITY-SUR', city: 'Surat', state: 'Gujarat', country: 'India', type: 'CITY', lat: 21.1702, lng: 72.8311 },
+  { id: 'CITY-IXC', city: 'Chandigarh', state: 'Punjab & Haryana', country: 'India', type: 'CITY', lat: 30.7333, lng: 76.7794 },
+  { id: 'CITY-SML', city: 'Shimla', state: 'Himachal Pradesh', country: 'India', type: 'CITY', lat: 31.1048, lng: 77.1734 }
 ];
 
 export interface RouteData {
@@ -310,7 +335,7 @@ export const searchLocations = async (query: string, biasCoords?: { lat: number,
   ]);
 
   // 3. Fetch from Fallback Dataset
-  const fallbackMatches = FALLBACK_AIRPORTS.filter(a => 
+  const fallbackMatches = FALLBACK_CITIES_AND_AIRPORTS.filter(a => 
     a.city.toLowerCase().includes(q) || 
     a.code?.toLowerCase().includes(q) || 
     a.state.toLowerCase().includes(q)
